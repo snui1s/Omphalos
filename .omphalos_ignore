@@ -1,4 +1,4 @@
-# .llm_ignore
+# .omphalos_ignore
 # Files and directories to ignore when scanning codebase symbols.
 # Uses gitignore pattern syntax.
 
@@ -14,9 +14,9 @@ dist/
 build/
 *.egg-info/
 
-# Indexer cache & output
-.llm_cache.json
-.llm_index
+# Omphalos cache & output
+.omphalos_cache.json
+.omphalos_index
 
 # Locks & minified files
 *.lock

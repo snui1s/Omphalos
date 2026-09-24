@@ -1,0 +1,158 @@
+# Codebase Symbol Index
+
+## src/omphalos/cache.py
+- `calculate_sha256()` @13
+- `load_cache()` @16
+- `save_cache()` @30: เขียน cache แบบ atomic (temp file + os.replace) กันไฟล์เสียหายเมื่อถูกขัดกลางคัน
+
+## src/omphalos/cli.py
+- `_version_callback()` @24
+- `main()` @31: Omphalos - codebase symbol index for LLMs
+- `init()` @41: Create a default .omphalos_ignore file if not present.
+- `scan()` @54: Scan multi-language files and generate codebase symbol index.
+
+## src/omphalos/ignore.py
+- `ensure_ignore_file()` @51: สร้างไฟล์ .omphalos_ignore หากยังไม่มี
+- `load_ignore_spec()` @60
+- `collect_files()` @73: เดินหาไฟล์ตามนามสกุลที่รองรับ โดยข้ามไฟล์/โฟลเดอร์ตาม ignore spec
+- class `NotAGitRepoError` @100
+- `collect_git_files()` @104: เฉพาะไฟล์ที่ git track เท่านั้น (git ls-files) กรองด้วย spec และนามสกุลต่อ
+
+## src/omphalos/parser.py
+- `_text()` @41
+- `_mk_symbol()` @45
+- `_prev_comment_block()` @57: คืน comment nodes ที่แนบเหนือ node ติดต่อกัน (เรียงตามลำดับบรรทัดจากบนลงล่าง)
+- `_get_py_docstring()` @78
+- `_go_doc()` @91: Go doc comment: บรรทัดแรกของ comment block ที่แนบเหนือ declaration (ข้าม //go: directive)
+- `_rust_doc()` @101: Rust doc comment: บรรทัดแรกของ /// block ที่แนบเหนือ item
+- `_ts_doc()` @112: JSDoc: บรรทัดแรกที่มีเนื้อหาของ /** ... */ block ที่แนบเหนือ declaration
+- `_unwrap_decorated()` @125
+- `_extract_python()` @133
+- `_ts_symbol()` @163
+- `_extract_ts_js()` @215
+- `_extract_go()` @236
+- `_rust_vis()` @272
+- `_extract_rust()` @279
+- `extract_symbols()` @336
+
+## src/omphalos/render.py
+- `render_markdown()` @7
+- `_render_md_symbols()` @19
+- `render_json()` @30
+
+## tests/fixtures/sample.go
+- type `Account` (struct) @3
+- type `BankService` (interface) @8
+- func `OpenAccount()` @12
+- func `(a *Account) Deposit()` @16
+
+## tests/fixtures/sample.js
+- export function `createCounter()` @2: Creates a counter closure.
+- const `internalHelper()` @7
+
+## tests/fixtures/sample.py
+- `cached_fn()` @7: Compute something expensive.
+- class `Greeter` @12: Greets people in various languages.
+  - `greet()` @15: Return a greeting.
+  - `fetch_greetings()` @19
+- `top_level()` @23: ฟังก์ชันที่มีชื่อพารามิเตอร์เป็นภาษาไทย.
+
+## tests/fixtures/sample.rs
+- pub struct `DatabasePool` @1
+- pub enum `DbError` @5
+- pub fn `connect()` @10
+- impl `DatabasePool` @14
+  - `pub fn get_connection()` @15
+- impl `Drop for DatabasePool` @18
+  - `fn drop()` @19
+
+## tests/fixtures/sample.ts
+- export interface `UserProfile` @1
+- export type `AuthToken` @6
+- export function `verifyToken()` @8
+- export const `API_ENDPOINT` @12
+- export const `logoutUser()` @14
+- export class `SessionManager` @18
+  - `createSession()` @19
+
+## tests/fixtures/sample.tsx
+- export interface `AvatarProps` @4: Props for the avatar component.
+- export function `Avatar()` @10: Displays a user avatar.
+- export const `AvatarList()` @14
+
+## tests/test_cache.py
+- `test_sha256_known_value()` @10
+- `test_load_cache_missing_file()` @16
+- `test_load_cache_corrupt_json()` @20
+- `test_load_cache_old_version_is_discarded()` @25
+- `test_load_cache_legacy_format_is_discarded()` @33
+- `test_save_and_load_roundtrip()` @42
+- `test_save_cache_is_atomic_on_failure()` @51
+
+## tests/test_cli.py
+- `scan()` @35
+- `test_scan_generates_index_and_cache()` @39
+- `test_scan_reuses_cache_without_reparsing()` @58
+- `test_scan_no_cache_ignores_poisoned_cache()` @79
+- `test_scan_corrupt_cache_entry_falls_back_to_reparse()` @95
+- `test_scan_reports_parse_errors()` @110
+- `test_scan_no_failure_summary_when_all_ok()` @130
+- `test_scan_json_format()` @142
+- `test_scan_rejects_invalid_format()` @159
+- `test_scan_output_to_custom_path()` @164
+- `test_check_passes_when_fresh()` @174
+- `test_check_fails_when_stale_and_writes_nothing()` @182
+- `test_check_fails_when_index_missing()` @195
+- `test_version_flag()` @201
+- `test_git_only_scans_only_tracked_files()` @211
+- `test_git_only_outside_repo_fails()` @225
+
+## tests/test_edge_cases.py
+- `by_name()` @16
+- `test_bom_prefix_does_not_shift_line_numbers()` @28
+- `test_binary_garbage_with_supported_extension()` @34
+- `test_null_bytes_inside_file()` @40
+- `test_crlf_line_endings_keep_line_numbers()` @46
+- `test_thai_identifiers_and_docstrings()` @54
+- `test_large_file_parses_correctly()` @66
+- `test_comment_only_file()` @75
+- `test_file_with_only_blank_lines()` @80
+- `test_jsx_uses_tsx_parser_with_jsx_syntax()` @86
+- `test_mjs_and_cjs_map_to_javascript()` @94
+- `test_fixture_sample_python()` @102
+- `test_fixture_sample_tsx()` @117
+- `test_fixture_sample_js()` @133
+- `test_scan_unicode_and_spaces_in_filename()` @146
+- `test_scan_directory_with_no_supported_files()` @158
+- `test_scan_deeply_nested_files()` @169
+
+## tests/test_ignore.py
+- `make_tree()` @19
+- `collected_rel()` @26
+- `test_ensure_ignore_file_creates_when_missing()` @31
+- `test_ensure_ignore_file_respects_existing()` @38
+- `test_collect_files_skips_ignored_dirs_and_extensions()` @43
+- `test_negation_can_reinclude_directory()` @50
+- `test_negation_inside_excluded_dir_does_not_apply()` @57
+- `test_omphalos_ignore_overrides_gitignore()` @65
+- `test_collect_files_is_sorted()` @73
+- `init_git_repo()` @86
+- `test_collect_git_files_only_tracked()` @98
+- `test_collect_git_files_outside_repo_raises()` @107
+
+## tests/test_parser.py
+- `by_name()` @7
+- `test_extract_python_structured()` @17
+- `test_extract_python_decorated_uses_def_line()` @47
+- `test_extract_go_docs_and_lines()` @58
+- `test_extract_go_interface_and_plain_type()` @91
+- `test_extract_rust_docs_and_traits()` @105
+- `test_extract_rust_trait()` @151
+- `test_extract_ts_jsdoc_and_exports()` @161
+- `test_extract_ts_multiline_jsdoc_takes_first_line()` @204
+- `test_extract_symbols_reads_file_when_no_content()` @218
+- `test_extract_symbols_empty_content()` @225
+- `test_extract_symbols_unknown_extension()` @229
+- `test_extract_fixture_ts()` @233
+- `test_extract_fixture_go()` @242
+- `test_extract_fixture_rust()` @249

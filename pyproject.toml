@@ -1,7 +1,7 @@
 [project]
-name = "llm-indexer"
-version = "0.1.0"
-description = "Add your description here"
+name = "omphalos"
+version = "1.0.0"
+description = "Codebase symbol index for LLMs"
 readme = "README.md"
 authors = [
     { name = "snui1s", email = "snailsqz@gmail.com" }
@@ -19,12 +19,35 @@ dependencies = [
 ]
 
 [project.scripts]
-llm-indexer = "llm_indexer.cli:app"
+omphalos = "omphalos.cli:app"
 
 [dependency-groups]
 dev = [
     "pytest>=8.0",
+    "ruff>=0.8",
+    "mypy>=1.13",
 ]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# B008: typer.Option(...) เป็น idiom มาตรฐานของ Typer
+"src/omphalos/cli.py" = ["B008"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = ["tree_sitter_python", "tree_sitter_typescript", "tree_sitter_javascript", "tree_sitter_go", "tree_sitter_rust"]
+ignore_missing_imports = true
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]

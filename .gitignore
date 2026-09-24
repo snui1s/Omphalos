@@ -8,3 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Testing & caches
+.pytest_cache/
+.omphalos_cache.json
