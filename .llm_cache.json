@@ -1,0 +1,150 @@
+{
+  "version": 2,
+  "files": {
+    "src/llm_indexer/__init__.py": {
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "data": {
+        "symbols": []
+      }
+    },
+    "src/llm_indexer/cache.py": {
+      "hash": "554a14b7a46382901db410395de9c3f93199b88a407f39f736749643976612fd",
+      "data": {
+        "symbols": [
+          "- `calculate_sha256()`",
+          "- `load_cache()`",
+          "- `save_cache()`: เขียน cache แบบ atomic (temp file + os.replace) กันไฟล์เสียหายเมื่อถูกขัดกลางคัน"
+        ]
+      }
+    },
+    "src/llm_indexer/cli.py": {
+      "hash": "ad5f42979aa56864f96fd9729704a626a121eacd3675d55a44c3dd5dda63caa1",
+      "data": {
+        "symbols": [
+          "- `callback()`: LLM Indexer CLI",
+          "- `init()`: Create a default .llm_ignore file if not present.",
+          "- `scan()`: Scan multi-language files and generate codebase symbol index."
+        ]
+      }
+    },
+    "src/llm_indexer/ignore.py": {
+      "hash": "75f19ff2f4ccd26217a2fbf6031e5249eaff7323e3043058ad3dde05648ee6c5",
+      "data": {
+        "symbols": [
+          "- `ensure_ignore_file()`: สร้างไฟล์ .llm_ignore หากยังไม่มีไฟล์ ignore อยู่",
+          "- `load_ignore_spec()`",
+          "- `collect_files()`: เดินหาไฟล์ตามนามสกุลที่รองรับ โดยข้ามไฟล์/โฟลเดอร์ตาม ignore spec"
+        ]
+      }
+    },
+    "src/llm_indexer/parser.py": {
+      "hash": "34ef9b20815eebe4f6b7609ce855dd2b8b30e6c13b524b02a96dbdaf67346eff",
+      "data": {
+        "symbols": [
+          "- `_get_py_docstring()`",
+          "- `_unwrap_decorated()`",
+          "- `_extract_python()`",
+          "- `_extract_ts_js()`",
+          "- `_extract_go()`",
+          "- `_extract_rust()`",
+          "- `extract_symbols()`"
+        ]
+      }
+    },
+    "tests/fixtures/sample.go": {
+      "hash": "882d5745efb665d4a5b44e96dbc92481e3e99586e6e33ca882ebd2b85d46eae6",
+      "data": {
+        "symbols": [
+          "- type `Account` (struct)",
+          "- type `BankService` (interface)",
+          "- func `OpenAccount()`",
+          "- func `(a *Account) Deposit()`"
+        ]
+      }
+    },
+    "tests/fixtures/sample.rs": {
+      "hash": "55d44c0ded15779ba55a09ee904dca129338a23f09e787a3cae3eabb8eb92e73",
+      "data": {
+        "symbols": [
+          "- pub struct `DatabasePool`",
+          "- pub enum `DbError`",
+          "- pub fn `connect()`",
+          "- impl `DatabasePool`",
+          "  - `pub fn get_connection()`",
+          "- impl `Drop for DatabasePool`",
+          "  - `fn drop()`"
+        ]
+      }
+    },
+    "tests/fixtures/sample.ts": {
+      "hash": "e718bc362f6d805e18e0a098549227c06447f397ff024fd88fa69ef1d51f8210",
+      "data": {
+        "symbols": [
+          "- export interface `UserProfile`",
+          "- export type `AuthToken`",
+          "- export function `verifyToken()`",
+          "- export const `API_ENDPOINT`",
+          "- export const `logoutUser()`",
+          "- export class `SessionManager`",
+          "  - `createSession()`"
+        ]
+      }
+    },
+    "tests/test_cache.py": {
+      "hash": "0631ebc65f78c15ab152855b1d56b397db081f5f78c5ae62be13c5d8fffaa04f",
+      "data": {
+        "symbols": [
+          "- `test_sha256_known_value()`",
+          "- `test_load_cache_missing_file()`",
+          "- `test_load_cache_corrupt_json()`",
+          "- `test_load_cache_old_version_is_discarded()`",
+          "- `test_load_cache_legacy_format_is_discarded()`",
+          "- `test_save_and_load_roundtrip()`",
+          "- `test_save_cache_is_atomic_on_failure()`"
+        ]
+      }
+    },
+    "tests/test_cli.py": {
+      "hash": "a1f5abeaedeeb092f0ba7c89761746bbb81e10c680735eeeb06e3c78fcab1133",
+      "data": {
+        "symbols": [
+          "- `test_scan_generates_index_and_cache()`",
+          "- `test_scan_reuses_cache_without_reparsing()`",
+          "- `test_scan_corrupt_cache_entry_falls_back_to_reparse()`",
+          "- `test_scan_reports_parse_errors()`",
+          "- `test_scan_no_failure_summary_when_all_ok()`"
+        ]
+      }
+    },
+    "tests/test_ignore.py": {
+      "hash": "0b3f10fe07639c836a7eec0bf8a79b1f075a57593c59abdcbf567036f2ed2987",
+      "data": {
+        "symbols": [
+          "- `make_tree()`",
+          "- `collected_rel()`",
+          "- `test_ensure_ignore_file_creates_when_missing()`",
+          "- `test_ensure_ignore_file_respects_existing()`",
+          "- `test_collect_files_skips_ignored_dirs_and_extensions()`",
+          "- `test_negation_can_reinclude_directory()`",
+          "- `test_negation_inside_excluded_dir_does_not_apply()`",
+          "- `test_llm_ignore_overrides_gitignore()`",
+          "- `test_collect_files_is_sorted()`"
+        ]
+      }
+    },
+    "tests/test_parser.py": {
+      "hash": "e0068687f5a7ce4b66fa21fce05f6b2b2a25b254bee609d120ceed86491c8ed4",
+      "data": {
+        "symbols": [
+          "- `test_extract_python_with_content_bytes()`",
+          "- `test_extract_symbols_reads_file_when_no_content()`",
+          "- `test_extract_symbols_empty_content()`",
+          "- `test_extract_symbols_unknown_extension()`",
+          "- `test_extract_fixture_ts()`",
+          "- `test_extract_fixture_go()`",
+          "- `test_extract_fixture_rust()`"
+        ]
+      }
+    }
+  }
+}

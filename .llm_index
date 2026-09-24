@@ -1,0 +1,85 @@
+# Codebase Symbol Index
+
+## src/llm_indexer/cache.py
+- `calculate_sha256()`
+- `load_cache()`
+- `save_cache()`: เขียน cache แบบ atomic (temp file + os.replace) กันไฟล์เสียหายเมื่อถูกขัดกลางคัน
+
+## src/llm_indexer/cli.py
+- `callback()`: LLM Indexer CLI
+- `init()`: Create a default .llm_ignore file if not present.
+- `scan()`: Scan multi-language files and generate codebase symbol index.
+
+## src/llm_indexer/ignore.py
+- `ensure_ignore_file()`: สร้างไฟล์ .llm_ignore หากยังไม่มีไฟล์ ignore อยู่
+- `load_ignore_spec()`
+- `collect_files()`: เดินหาไฟล์ตามนามสกุลที่รองรับ โดยข้ามไฟล์/โฟลเดอร์ตาม ignore spec
+
+## src/llm_indexer/parser.py
+- `_get_py_docstring()`
+- `_unwrap_decorated()`
+- `_extract_python()`
+- `_extract_ts_js()`
+- `_extract_go()`
+- `_extract_rust()`
+- `extract_symbols()`
+
+## tests/fixtures/sample.go
+- type `Account` (struct)
+- type `BankService` (interface)
+- func `OpenAccount()`
+- func `(a *Account) Deposit()`
+
+## tests/fixtures/sample.rs
+- pub struct `DatabasePool`
+- pub enum `DbError`
+- pub fn `connect()`
+- impl `DatabasePool`
+  - `pub fn get_connection()`
+- impl `Drop for DatabasePool`
+  - `fn drop()`
+
+## tests/fixtures/sample.ts
+- export interface `UserProfile`
+- export type `AuthToken`
+- export function `verifyToken()`
+- export const `API_ENDPOINT`
+- export const `logoutUser()`
+- export class `SessionManager`
+  - `createSession()`
+
+## tests/test_cache.py
+- `test_sha256_known_value()`
+- `test_load_cache_missing_file()`
+- `test_load_cache_corrupt_json()`
+- `test_load_cache_old_version_is_discarded()`
+- `test_load_cache_legacy_format_is_discarded()`
+- `test_save_and_load_roundtrip()`
+- `test_save_cache_is_atomic_on_failure()`
+
+## tests/test_cli.py
+- `test_scan_generates_index_and_cache()`
+- `test_scan_reuses_cache_without_reparsing()`
+- `test_scan_corrupt_cache_entry_falls_back_to_reparse()`
+- `test_scan_reports_parse_errors()`
+- `test_scan_no_failure_summary_when_all_ok()`
+
+## tests/test_ignore.py
+- `make_tree()`
+- `collected_rel()`
+- `test_ensure_ignore_file_creates_when_missing()`
+- `test_ensure_ignore_file_respects_existing()`
+- `test_collect_files_skips_ignored_dirs_and_extensions()`
+- `test_negation_can_reinclude_directory()`
+- `test_negation_inside_excluded_dir_does_not_apply()`
+- `test_llm_ignore_overrides_gitignore()`
+- `test_collect_files_is_sorted()`
+
+## tests/test_parser.py
+- `test_extract_python_with_content_bytes()`
+- `test_extract_symbols_reads_file_when_no_content()`
+- `test_extract_symbols_empty_content()`
+- `test_extract_symbols_unknown_extension()`
+- `test_extract_fixture_ts()`
+- `test_extract_fixture_go()`
+- `test_extract_fixture_rust()`

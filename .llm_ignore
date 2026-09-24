@@ -1,0 +1,23 @@
+# .llm_ignore
+# Files and directories to ignore when scanning codebase symbols.
+# Uses gitignore pattern syntax.
+
+# Version control & environments
+.git/
+.venv/
+venv/
+node_modules/
+
+# Cache & build outputs
+__pycache__/
+dist/
+build/
+*.egg-info/
+
+# Indexer cache & output
+.llm_cache.json
+.llm_index
+
+# Locks & minified files
+*.lock
+*.min.js

@@ -1,0 +1,31 @@
+[project]
+name = "llm-indexer"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "snui1s", email = "snailsqz@gmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "typer>=0.12.0",
+    "pathspec>=1.1",
+    "tree-sitter>=0.24.0",
+    "tree-sitter-python>=0.25.0",
+    "tree-sitter-typescript>=0.23.0",
+    "tree-sitter-javascript>=0.25.0",
+    "tree-sitter-go>=0.25.0",
+    "tree-sitter-rust>=0.24.0",
+]
+
+[project.scripts]
+llm-indexer = "llm_indexer.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
