@@ -11,4 +11,7 @@ wheels/
 
 # Testing & caches
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.omphcache
 .omphalos_cache.json

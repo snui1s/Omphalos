@@ -1,11 +1,13 @@
 # omphalos/cli.py
 import sys
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 import typer
 
 from omphalos.cache import calculate_sha256, load_cache, save_cache
 from omphalos.ignore import (
+    IGNORE_FILE,
     NotAGitRepoError,
     collect_files,
     collect_git_files,
@@ -15,16 +17,24 @@ from omphalos.ignore import (
 from omphalos.parser import SUPPORTED_EXTENSIONS, extract_symbols
 from omphalos.render import render_json, render_markdown
 
-INDEX_FILE = ".omphalos_index"
+INDEX_FILE = "INDEX.md"
 FORMATS = ("markdown", "json")
 
 app = typer.Typer(help="Omphalos - codebase symbol index for LLMs")
 
 
+def _package_version() -> str:
+    """Read the installed package version (single source of truth: pyproject.toml)."""
+    try:
+        return version("omphalos")
+    except PackageNotFoundError:
+        return "unknown"
+
+
 def _version_callback(value: bool):
     """Callback for --version flag to print the version and exit immediately."""
     if value:
-        typer.echo("omphalos 0.1.0")
+        typer.echo(f"omph {_package_version()} (omphalos)")
         raise typer.Exit()
 
 
@@ -42,13 +52,13 @@ def main(
 def init(
     target_dir: str = typer.Argument(".", help="Target directory to initialize")
 ):
-    """Create a default .omphalos_ignore file if not present in the target directory."""
+    """Create a default .omphignore file if not present in the target directory."""
     root = Path(target_dir).resolve()
     created = ensure_ignore_file(root)
     if created:
         typer.echo(f"Created {created.name}")
     else:
-        typer.echo("Ignore file already exists (.omphalos_ignore).")
+        typer.echo(f"Ignore file already exists ({IGNORE_FILE}).")
 
 
 @app.command()

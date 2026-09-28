@@ -1,4 +1,4 @@
-# .omphalos_ignore
+# .omphignore
 # Files and directories to ignore when scanning codebase symbols.
 # Uses gitignore pattern syntax.
 
@@ -10,13 +10,20 @@ node_modules/
 
 # Cache & build outputs
 __pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 dist/
 build/
 *.egg-info/
 
 # Omphalos cache & output
+.omphcache
 .omphalos_cache.json
+INDEX.md
 .omphalos_index
+.omphignore
+.omphalos_ignore
 
 # Locks & minified files
 *.lock

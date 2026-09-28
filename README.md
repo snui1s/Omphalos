@@ -7,7 +7,7 @@
 
 > Codebase symbol indexer for LLMs.
 
-Omphalos generates a compact, high-signal symbol map (`.omphalos_index`) of your repository. It provides large language models and developers with an instant architectural overview and precise symbol locations—minimizing token usage and eliminating the need to read entire source files just to find declarations.
+Omphalos generates a compact, high-signal symbol map (`INDEX.md`) of your repository. It provides large language models and developers with an instant architectural overview and precise symbol locations—minimizing token usage and eliminating the need to read entire source files just to find declarations.
 
 ## Table of Contents
 
@@ -35,8 +35,9 @@ Omphalos was created to solve this problem:
 
 1. **Multi-language AST Parsing**: Uses Tree-sitter for deterministic parsing across Python, TypeScript/JavaScript, Go, and Rust.
 2. **Precise Line Numbers (`@<line>`)**: Symbols indicate exact declaration line numbers so agents can inspect or slice specific ranges on demand.
-3. **Atomic Incremental Cache**: Tracks SHA-256 content hashes to re-parse only changed files, guaranteeing rapid re-indexes.
-4. **CI/CD Integration**: Supports `--check` mode to ensure codebase indexes stay synchronized with changes.
+3. **Internal Logic Hints**: Function-like symbols list their deduplicated call targets (`calls`) and raised exception types (`raises`), giving agents a control-flow preview without opening the file.
+4. **Atomic Incremental Cache**: Tracks SHA-256 content hashes to re-parse only changed files, guaranteeing rapid re-indexes.
+5. **CI/CD Integration**: Supports `--check` mode to ensure codebase indexes stay synchronized with changes.
 
 ## Install
 
@@ -45,7 +46,7 @@ Omphalos was created to solve this problem:
 Run directly without installing:
 
 ```sh
-$ uvx --from git+https://github.com/snui1s/Omphalos.git omphalos scan
+$ uvx --from git+https://github.com/snui1s/Omphalos.git omph scan
 ```
 
 Or install as a standalone CLI tool:
@@ -72,51 +73,52 @@ $ uv sync
 
 ### Quick Start
 
-1. **Initialize Ignore File** (creates default `.omphalos_ignore`):
+1. **Initialize Ignore File** (creates default `.omphignore`):
 
 ```sh
-$ omphalos init
+$ omph init
 ```
 
 2. **Generate the Symbol Index**:
 
 ```sh
-$ omphalos scan
+$ omph scan
 ```
 
-This generates `.omphalos_index` in the root directory:
+This generates `INDEX.md` in the root directory:
 
 ```markdown
 # Codebase Symbol Index
 
 ## src/omphalos/cache.py
 
-- `calculate_sha256()` @13
-- `load_cache()` @16
-- `save_cache()` @30: เขียน cache แบบ atomic (temp file + os.replace)
+- `calculate_sha256()` @15: Calculate the SHA-256 checksum of raw file bytes for change detection. (calls: `hexdigest`, `hashlib.sha256`)
+- `save_cache()` @38: Save symbol cache to .omphcache atomically. (calls: `tempfile.mkstemp`, `os.fdopen`, `json.dump`, `os.replace`, `os.unlink`)
 
-## src/omphalos/render.py
+## src/omphalos/cli.py
 
-- `render_markdown()` @7
-- `render_json()` @30
+- `_version_callback()` @33: Callback for --version flag to print the version and exit immediately. (calls: `typer.echo`, `_package_version`; raises: `typer.Exit`)
 
 ## tests/fixtures/sample.ts
 
-- export interface `UserProfile` @3: User profile payload.
-- export function `verifyToken()` @14: Validates JWT token signature.
-- export class `SessionManager` @22
-  - `createSession()` @25: Starts a new session.
+- export interface `UserProfile` @1
+- export type `AuthToken` @6
+- export function `verifyToken()` @8
+- export class `SessionManager` @18
+  - `createSession()` @19
 ```
 
 ### CLI Reference
 
 ```sh
-$ omphalos scan [DIRECTORY] [OPTIONS]
+$ omph scan [DIRECTORY] [OPTIONS]
 ```
+
+The binary is installed as `omph`; the full name `omphalos` is also available as an alias.
 
 | Option           | Flag               | Description                                                               |
 | ---------------- | ------------------ | ------------------------------------------------------------------------- |
-| `--output`, `-o` | `PATH`             | Custom path for index output (default: `.omphalos_index`).                |
+| `--output`, `-o` | `PATH`             | Custom path for index output (default: `INDEX.md`).                       |
 | `--format`       | `markdown \| json` | Output format (default: `markdown`).                                      |
 | `--check`        | flag               | Verify index is up to date without writing. Exits with code `1` if stale. |
 | `--git-only`     | flag               | Scan only files tracked by Git (`git ls-files`).                          |
@@ -126,12 +128,12 @@ $ omphalos scan [DIRECTORY] [OPTIONS]
 
 ### LLM / Agent Integration
 
-- **Repository Prompting**: Add `.omphalos_index` into your agent's initial prompt or workspace context.
+- **Repository Prompting**: Add `INDEX.md` into your agent's initial prompt or workspace context.
 - **Surgical Inspection**: Because each symbol includes `@<line>`, an LLM can request precise lines via tools (e.g. `head -n 50` or view tool slice) rather than ingesting entire files.
 - **Machine-Readable Formats**: Use `--format json` to integrate with custom RAG systems or agent tools:
 
 ```sh
-$ omphalos scan --format json -o .omphalos_index.json
+$ omph scan --format json -o index.json
 ```
 
 ## Development

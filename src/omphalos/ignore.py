@@ -8,10 +8,16 @@ import pathspec
 
 DEFAULT_IGNORES = [
     ".git/",
+    ".omphcache",
     ".omphalos_cache.json",
+    "INDEX.md",
     ".omphalos_index",
+    ".omphignore",
     ".omphalos_ignore",
     "__pycache__/",
+    ".pytest_cache/",
+    ".mypy_cache/",
+    ".ruff_cache/",
     "node_modules/",
     ".venv/",
     "venv/",
@@ -21,7 +27,7 @@ DEFAULT_IGNORES = [
     "*.min.js",
 ]
 
-IGNORE_TEMPLATE = """# .omphalos_ignore
+IGNORE_TEMPLATE = """# .omphignore
 # Files and directories to ignore when scanning codebase symbols.
 # Uses gitignore pattern syntax.
 
@@ -33,24 +39,27 @@ node_modules/
 
 # Cache & build outputs
 __pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 dist/
 build/
 *.egg-info/
 
 # Omphalos cache & output
-.omphalos_cache.json
-.omphalos_index
+.omphcache
+INDEX.md
 
 # Locks & minified files
 *.lock
 *.min.js
 """
 
-IGNORE_FILE = ".omphalos_ignore"
+IGNORE_FILE = ".omphignore"
 
 def ensure_ignore_file(root_dir: Path) -> Path | None:
-    """Create a default .omphalos_ignore file if it does not already exist.
-    
+    """Create a default .omphignore file if it does not already exist.
+
     Returns:
         Path of the newly created ignore file, or None if it already exists.
     """
@@ -63,19 +72,19 @@ def ensure_ignore_file(root_dir: Path) -> Path | None:
 
 def load_ignore_spec(root_dir: Path) -> pathspec.PathSpec:
     """Load and merge all ignore rules into a unified PathSpec.
-    
+
     Precedence order:
     1. DEFAULT_IGNORES (e.g., .git, venv, caches)
     2. Rules from .gitignore (if present)
-    3. Rules from .omphalos_ignore (can override prior rules using negation '!')
-    
+    3. Rules from .omphignore (and legacy .omphalos_ignore if present)
+
     Returns:
         GitIgnoreSpec matcher for filtering paths.
     """
     patterns = list(DEFAULT_IGNORES)
 
-    # Order matters: .omphalos_ignore comes after .gitignore to allow overriding with negation patterns
-    for filename in [".gitignore", IGNORE_FILE]:
+    # Order matters: ignore files come after .gitignore to allow overriding with negation patterns
+    for filename in [".gitignore", ".omphalos_ignore", IGNORE_FILE]:
         ignore_file = root_dir / filename
         if ignore_file.exists():
             patterns.extend(ignore_file.read_text(encoding="utf-8").splitlines())
@@ -119,15 +128,15 @@ def collect_git_files(
     root_dir: Path, spec: pathspec.PathSpec, supported_extensions: Container[str]
 ) -> list[Path]:
     """Collect only files tracked by Git (via git ls-files), filtered by spec and extension.
-    
+
     Args:
         root_dir: Root directory of the Git repository.
         spec: PathSpec ignore filter.
         supported_extensions: Collection of supported file extensions.
-        
+
     Returns:
         List of matching file Paths that exist in the working tree.
-        
+
     Raises:
         NotAGitRepoError: If root_dir is not inside a git repository or git binary is missing.
     """

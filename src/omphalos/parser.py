@@ -45,7 +45,7 @@ def _text(node: ts.Node) -> str:
 
 def _mk_symbol(kind: str, name: str, node: ts.Node, label: str, doc: str = "") -> dict[str, Any]:
     """Create a standardized symbol schema dictionary.
-    
+
     Args:
         kind: Type of symbol (e.g., function, class, method, struct, interface).
         name: Identifier name of the symbol.
@@ -142,6 +142,107 @@ def _unwrap_decorated(node: ts.Node) -> ts.Node:
     return node
 
 
+# Node-type rules for internal logic extraction, per language family:
+# {call-like node type: field name holding the callee expression}
+_CALL_FIELDS = {
+    "python": {"call": "function"},
+    "ts_js": {"call_expression": "function", "new_expression": "constructor"},
+    "go": {"call_expression": "function"},
+    "rust": {"call_expression": "function"},
+}
+# Statement types that propagate errors outward (Go/Rust use return values instead)
+_RAISE_NODES = {"python": "raise_statement", "ts_js": "throw_statement"}
+
+
+def _raise_target(node: ts.Node) -> str:
+    """Extract the exception type from a raise/throw statement.
+
+    Covers `raise X`, `raise X(...)`, `throw new X(...)`, and bare identifier re-throws.
+    """
+    if not node.named_children:
+        return ""
+    first = node.named_children[0]
+    if first.type in ("call", "call_expression"):
+        callee = first.child_by_field_name("function")
+        return _text(callee) if callee else ""
+    if first.type == "new_expression":
+        ctor = first.child_by_field_name("constructor")
+        return _text(ctor) if ctor else ""
+    if first.type in ("identifier", "scoped_identifier", "scoped_type_identifier"):
+        return _text(first)
+    return ""
+
+
+def _is_simple_chain(node: ts.Node) -> bool:
+    """True ถ้า node เป็นโซ่ identifier เรียบ ๆ เช่น `self`, `log`, `file_path.relative_to`
+
+    ใช้แยกว่า callee ควรแสดงเต็ม (`self._flush`) หรือย่อเหลือ property ปลาย
+    เมื่อ object ต้นทางเป็นนิพจน์ซับซ้อน (`(a / b).as_posix`, `f(x).strip`)
+    """
+    if node.type in ("identifier", "type_identifier", "self", "this", "super",
+                     "field_identifier", "property_identifier"):
+        return True
+    kids = node.named_children
+    if node.type in ("attribute", "member_expression", "selector_expression", "field_expression",
+                     "scoped_identifier", "scoped_type_identifier") and kids:
+        return _is_simple_chain(kids[0])
+    return False
+
+
+def _callee_name(callee: ts.Node) -> str:
+    """Compact callee name: dotted chain เต็มถ้าต้นทางเรียบ, ไม่งั้นเหลือเฉพาะชื่อปลาย"""
+    kids = callee.named_children
+    if len(kids) < 2 or _is_simple_chain(kids[0]):
+        return _text(callee)
+    return _text(kids[-1])
+
+
+def _collect_logic(node: ts.Node, family: str) -> tuple[list[str], list[str]]:
+    """Collect deduplicated internal call targets and raised exception types of a function body.
+
+    Only names are recorded (not arguments) to keep the index compact yet signal-dense.
+    Raise/throw subtrees are not descended into: the raised expression is an error type,
+    not a call target, and would otherwise appear in both lists.
+    """
+    call_fields = _CALL_FIELDS[family]
+    raise_type = _RAISE_NODES.get(family)
+    calls: list[str] = []
+    raises: list[str] = []
+    stack = [node]
+    while stack:
+        n = stack.pop()
+        if raise_type and n.type == raise_type:
+            name = _raise_target(n)
+            if name and name not in raises:
+                raises.append(name)
+            continue
+        field = call_fields.get(n.type)
+        if field:
+            callee = n.child_by_field_name(field)
+            if callee:
+                name = _callee_name(callee)
+                if name and name not in calls:
+                    calls.append(name)
+        stack.extend(reversed(n.named_children))
+    return calls, raises
+
+
+def _annotate_logic(sym: dict[str, Any], node: ts.Node, family: str, force: bool = False):
+    """Attach `calls`/`raises` to function-like symbols (keys added only when non-empty).
+
+    Scans only the function *body*: calls appearing in signatures, decorators,
+    or parameter defaults are declaration-time expressions, not runtime logic.
+    """
+    if not force and sym["kind"] not in ("function", "method"):
+        return
+    body = node.child_by_field_name("body") or node
+    calls, raises = _collect_logic(body, family)
+    if calls:
+        sym["calls"] = calls
+    if raises:
+        sym["raises"] = raises
+
+
 def _extract_python(root_node: ts.Node) -> list[dict[str, Any]]:
     """Extract all symbols from a Python AST (classes, methods, functions)."""
     symbols = []
@@ -160,15 +261,18 @@ def _extract_python(root_node: ts.Node) -> list[dict[str, Any]]:
                         m_name_node = child.child_by_field_name("name")
                         if m_name_node:
                             m_name = _text(m_name_node)
-                            cls["children"].append(_mk_symbol(
-                                "method", m_name, child, f"`{m_name}()`", _get_py_docstring(child)))
+                            m = _mk_symbol("method", m_name, child, f"`{m_name}()`", _get_py_docstring(child))
+                            _annotate_logic(m, child, "python")
+                            cls["children"].append(m)
                 symbols.append(cls)
 
         elif node.type in ("function_definition", "async_function_definition"):
             name_node = node.child_by_field_name("name")
             if name_node:
                 name = _text(name_node)
-                symbols.append(_mk_symbol("function", name, node, f"`{name}()`", _get_py_docstring(node)))
+                fn = _mk_symbol("function", name, node, f"`{name}()`", _get_py_docstring(node))
+                _annotate_logic(fn, node, "python")
+                symbols.append(fn)
 
     return symbols
 
@@ -192,8 +296,10 @@ def _ts_symbol(target: ts.Node, doc_node: ts.Node, exported: bool) -> dict[str, 
     elif target.type == "function_declaration":
         name_node = target.child_by_field_name("name")
         if name_node:
-            return _mk_symbol("function", _text(name_node), target,
-                              f"{prefix}function `{_text(name_node)}()`", _ts_doc(doc_node))
+            fn = _mk_symbol("function", _text(name_node), target,
+                            f"{prefix}function `{_text(name_node)}()`", _ts_doc(doc_node))
+            _annotate_logic(fn, target, "ts_js")
+            return fn
 
     elif target.type == "class_declaration":
         name_node = target.child_by_field_name("name")
@@ -206,8 +312,10 @@ def _ts_symbol(target: ts.Node, doc_node: ts.Node, exported: bool) -> dict[str, 
                     if item.type == "method_definition":
                         m_name_node = item.child_by_field_name("name")
                         if m_name_node:
-                            cls["children"].append(_mk_symbol(
-                                "method", _text(m_name_node), item, f"`{_text(m_name_node)}()`", _ts_doc(item)))
+                            m = _mk_symbol(
+                                "method", _text(m_name_node), item, f"`{_text(m_name_node)}()`", _ts_doc(item))
+                            _annotate_logic(m, item, "ts_js")
+                            cls["children"].append(m)
             return cls
 
     elif target.type == "lexical_declaration":
@@ -221,7 +329,11 @@ def _ts_symbol(target: ts.Node, doc_node: ts.Node, exported: bool) -> dict[str, 
                     name = _text(name_node)
                     is_fn = value_node and value_node.type in ("arrow_function", "function_expression")
                     suffix = "()" if is_fn else ""
-                    return _mk_symbol(kind, name, target, f"{prefix}{kind_word} `{name}{suffix}`", _ts_doc(doc_node))
+                    sym = _mk_symbol(kind, name, target, f"{prefix}{kind_word} `{name}{suffix}`", _ts_doc(doc_node))
+                    if is_fn and value_node:
+                        # Arrow/function-expression constants behave as functions: collect their logic
+                        _annotate_logic(sym, value_node, "ts_js", force=True)
+                    return sym
 
     return None
 
@@ -272,7 +384,9 @@ def _extract_go(root_node: ts.Node) -> list[dict[str, Any]]:
             name_node = node.child_by_field_name("name")
             if name_node:
                 name = _text(name_node)
-                symbols.append(_mk_symbol("function", name, node, f"func `{name}()`", _go_doc(node)))
+                fn = _mk_symbol("function", name, node, f"func `{name}()`", _go_doc(node))
+                _annotate_logic(fn, node, "go")
+                symbols.append(fn)
 
         elif node.type == "method_declaration":
             recv = node.child_by_field_name("receiver")
@@ -280,7 +394,9 @@ def _extract_go(root_node: ts.Node) -> list[dict[str, Any]]:
             if name_node:
                 name = _text(name_node)
                 recv_str = _text(recv) if recv else ""
-                symbols.append(_mk_symbol("method", name, node, f"func `{recv_str} {name}()`", _go_doc(node)))
+                m = _mk_symbol("method", name, node, f"func `{recv_str} {name}()`", _go_doc(node))
+                _annotate_logic(m, node, "go")
+                symbols.append(m)
 
     return symbols
 
@@ -322,7 +438,9 @@ def _extract_rust(root_node: ts.Node) -> list[dict[str, Any]]:
             name_node = node.child_by_field_name("name")
             if name_node:
                 name = _text(name_node)
-                symbols.append(_mk_symbol("function", name, node, f"{vis_str}fn `{name}()`", _rust_doc(node)))
+                fn = _mk_symbol("function", name, node, f"{vis_str}fn `{name}()`", _rust_doc(node))
+                _annotate_logic(fn, node, "rust")
+                symbols.append(fn)
 
         elif node.type == "impl_item":
             trait_node = node.child_by_field_name("trait")
@@ -344,8 +462,10 @@ def _extract_rust(root_node: ts.Node) -> list[dict[str, Any]]:
                             m_name_node = item.child_by_field_name("name")
                             if m_name_node:
                                 m_name = _text(m_name_node)
-                                impl["children"].append(_mk_symbol(
-                                    "method", m_name, item, f"`{m_vis_str}fn {m_name}()`", _rust_doc(item)))
+                                m = _mk_symbol(
+                                    "method", m_name, item, f"`{m_vis_str}fn {m_name}()`", _rust_doc(item))
+                                _annotate_logic(m, item, "rust")
+                                impl["children"].append(m)
                 symbols.append(impl)
 
     return symbols
@@ -353,11 +473,11 @@ def _extract_rust(root_node: ts.Node) -> list[dict[str, Any]]:
 
 def extract_symbols(file_path: Path, content: bytes | None = None) -> dict[str, Any]:
     """Parse file content using the appropriate Tree-sitter language grammar and extract code symbols.
-    
+
     Args:
         file_path: Path to the target source file (used for extension detection and reading content if not given).
         content: Optional raw bytes content of the file.
-        
+
     Returns:
         Dictionary containing extracted symbols or an error message if parsing fails.
     """

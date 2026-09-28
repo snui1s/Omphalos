@@ -5,18 +5,20 @@ import os
 import tempfile
 from pathlib import Path
 
-CACHE_FILE = ".omphalos_cache.json"
+CACHE_FILE = ".omphcache"
 # Increment this number when the cache data structure changes to invalidate old caches.
 # v3: symbols stored as structured dicts (kind/name/line/doc/label/children)
-CACHE_VERSION = 3
+# v4: function/method symbols gained optional `calls` and `raises` lists
+# v5: calls exclude signature/decorator/defaults and collapse chained callees
+CACHE_VERSION = 5
 
 def calculate_sha256(content: bytes) -> str:
     """Calculate the SHA-256 checksum of raw file bytes for change detection."""
     return hashlib.sha256(content).hexdigest()
 
 def load_cache(root_dir: Path) -> dict:
-    """Load symbol cache from .omphalos_cache.json.
-    
+    """Load symbol cache from .omphcache.
+
     Returns an empty dict if the cache file does not exist, fails to parse,
     or has an incompatible cache version.
     """
@@ -34,8 +36,8 @@ def load_cache(root_dir: Path) -> dict:
     return files if isinstance(files, dict) else {}
 
 def save_cache(root_dir: Path, cache: dict):
-    """Save symbol cache to .omphalos_cache.json atomically.
-    
+    """Save symbol cache to .omphcache atomically.
+
     Writes to a temporary file first and replaces the target file via os.replace
     to prevent file corruption if interrupted.
     """

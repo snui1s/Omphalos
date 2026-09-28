@@ -6,10 +6,10 @@ from typing import Any
 
 def render_markdown(files_data: dict[str, dict[str, Any]]) -> str:
     """Render structured symbol data into Markdown format for LLM context or human reading.
-    
+
     Args:
         files_data: Symbol mapping keyed by relative file paths.
-        
+
     Returns:
         Formatted Markdown index grouping symbols under file headers.
     """
@@ -26,7 +26,7 @@ def render_markdown(files_data: dict[str, dict[str, Any]]) -> str:
 
 def _render_md_symbols(symbols: list[dict[str, Any]], depth: int, lines: list[str]):
     """Recursively render symbols as nested Markdown bullet points.
-    
+
     Includes label, @line number, docstring summary, and nested child symbols
     (such as methods within classes or trait implementations).
     """
@@ -36,16 +36,24 @@ def _render_md_symbols(symbols: list[dict[str, Any]], depth: int, lines: list[st
             text += f" @{sym['line']}"
         if sym.get("doc"):
             text += f": {sym['doc']}"
+        # Internal logic detail: deduplicated call targets and raised exceptions (inline, keeps tree flat)
+        detail = []
+        if sym.get("calls"):
+            detail.append("calls: " + ", ".join(f"`{c}`" for c in sym["calls"]))
+        if sym.get("raises"):
+            detail.append("raises: " + ", ".join(f"`{r}`" for r in sym["raises"]))
+        if detail:
+            text += f" ({'; '.join(detail)})"
         lines.append(text)
         _render_md_symbols(sym.get("children", []), depth + 1, lines)
 
 
 def render_json(files_data: dict[str, dict[str, Any]]) -> str:
     """Render structured symbol data into a JSON string for programmatic consumption.
-    
+
     Args:
         files_data: Symbol mapping keyed by relative file paths.
-        
+
     Returns:
         Indented JSON string conforming to the Omphalos schema format.
     """

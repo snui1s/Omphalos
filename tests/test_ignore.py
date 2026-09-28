@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from omphalos.ignore import (
+    IGNORE_FILE,
     NotAGitRepoError,
     collect_files,
     collect_git_files,
@@ -31,12 +32,12 @@ def collected_rel(tmp_path: Path, spec) -> set[str]:
 def test_ensure_ignore_file_creates_when_missing(tmp_path: Path):
     created = ensure_ignore_file(tmp_path)
     assert created is not None
-    assert created.name == ".omphalos_ignore"
+    assert created.name == IGNORE_FILE
     assert created.exists()
 
 
 def test_ensure_ignore_file_respects_existing(tmp_path: Path):
-    (tmp_path / ".omphalos_ignore").write_text("node_modules/\n", encoding="utf-8")
+    (tmp_path / IGNORE_FILE).write_text("node_modules/\n", encoding="utf-8")
     assert ensure_ignore_file(tmp_path) is None
 
 
@@ -49,7 +50,7 @@ def test_collect_files_skips_ignored_dirs_and_extensions(tmp_path: Path):
 
 def test_negation_can_reinclude_directory(tmp_path: Path):
     make_tree(tmp_path)
-    (tmp_path / ".omphalos_ignore").write_text("!build/\n", encoding="utf-8")
+    (tmp_path / IGNORE_FILE).write_text("!build/\n", encoding="utf-8")
     spec = load_ignore_spec(tmp_path)
     assert "build/out.py" in collected_rel(tmp_path, spec)
 
@@ -57,15 +58,15 @@ def test_negation_can_reinclude_directory(tmp_path: Path):
 def test_negation_inside_excluded_dir_does_not_apply(tmp_path: Path):
     # ตาม semantics ของ git: re-include ไฟล์ในโฟลเดอร์ที่ถูก ignore ทั้งโฟลเดอร์ไม่ได้
     make_tree(tmp_path)
-    (tmp_path / ".omphalos_ignore").write_text("!build/keep.py\n", encoding="utf-8")
+    (tmp_path / IGNORE_FILE).write_text("!build/keep.py\n", encoding="utf-8")
     spec = load_ignore_spec(tmp_path)
     assert "build/out.py" not in collected_rel(tmp_path, spec)
 
 
-def test_omphalos_ignore_overrides_gitignore(tmp_path: Path):
+def test_omphignore_overrides_gitignore(tmp_path: Path):
     make_tree(tmp_path)
     (tmp_path / ".gitignore").write_text("src/\n", encoding="utf-8")
-    (tmp_path / ".omphalos_ignore").write_text("!src/\n", encoding="utf-8")
+    (tmp_path / IGNORE_FILE).write_text("!src/\n", encoding="utf-8")
     spec = load_ignore_spec(tmp_path)
     assert collected_rel(tmp_path, spec) == {"src/a.py"}
 
