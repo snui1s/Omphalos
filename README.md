@@ -108,6 +108,22 @@ This generates `INDEX.md` in the root directory:
   - `createSession()` @19
 ```
 
+3. **Instruct AI Agents via `AGENTS.md`**:
+
+Create or add to `AGENTS.md` (or `CLAUDE.md` / `.cursorrules`) at the root of your repository so AI agents read `INDEX.md` before exploring code:
+
+```markdown
+# Agent Guidelines
+
+## Codebase Navigation & Exploration
+
+Before searching, running grep, or opening entire source files across the codebase:
+
+1. **Always read [`INDEX.md`](INDEX.md) first.** It provides an instant symbol map of the entire repository with exact line numbers.
+2. Use the symbols, line locations (`@<line>`), and internal logic hints (`calls:`, `raises:`) in [`INDEX.md`](INDEX.md) to pinpoint definitions directly.
+3. Inspect or slice-read only the specific line ranges or files needed for the task, rather than loading entire files into context.
+```
+
 ### CLI Reference
 
 ```sh
@@ -128,7 +144,7 @@ The binary is installed as `omph`; the full name `omphalos` is also available as
 
 ### LLM / Agent Integration
 
-- **Repository Prompting**: Add `INDEX.md` into your agent's initial prompt or workspace context.
+- **Automatic Agent Discovery via `AGENTS.md`**: Coding agents (Antigravity, Cursor, Claude Code, GitHub Copilot) automatically load `AGENTS.md` at conversation start. By telling the agent to consult `INDEX.md` first, the agent pinpoints definitions immediately without burning tokens on repository-wide grep searches.
 - **Surgical Inspection**: Because each symbol includes `@<line>`, an LLM can request precise lines via tools (e.g. `head -n 50` or view tool slice) rather than ingesting entire files.
 - **Machine-Readable Formats**: Use `--format json` to integrate with custom RAG systems or agent tools:
 

@@ -8,16 +8,16 @@
 ## src/omphalos/cli.py
 - `_package_version()` @26: Read the installed package version (single source of truth: pyproject.toml). (calls: `version`)
 - `_version_callback()` @34: Callback for --version flag to print the version and exit immediately. (calls: `typer.echo`, `_package_version`; raises: `typer.Exit`)
-- `main()` @42: Omphalos - Codebase symbol indexer for LLMs.
-- `init()` @52: Create a default .omphignore file if not present in the target directory. (calls: `resolve`, `Path`, `ensure_ignore_file`, `typer.echo`)
-- `scan()` @65: Scan multi-language codebase files and generate a symbol index with line numbers and docstrings. (calls: `resolve`, `Path`, `typer.echo`, `join`, `ensure_ignore_file`, `load_ignore_spec`, `collect_git_files`, `collect_files`, `load_cache`, `typer.progressbar`, `as_posix`, `file_path.relative_to`, `file_path.read_bytes`, `calculate_sha256`, `cache.get`, `cached.get`, `isinstance`, `extract_symbols`, `data.get`, `renderer`, `index_path.read_text`, `index_path.exists`, `index_path.write_text`, `save_cache`, `len`; raises: `typer.Exit`)
+- `main()` @42: Omphalos - Codebase symbol indexer for LLMs. (calls: `typer.echo`, `ctx.get_help`; raises: `typer.Exit`)
+- `init()` @56: Create a default .omphignore file if not present in the target directory. (calls: `resolve`, `Path`, `ensure_ignore_file`, `typer.echo`)
+- `scan()` @69: Scan multi-language codebase files and generate a symbol index with line numbers and docstrings. (calls: `resolve`, `Path`, `typer.echo`, `join`, `ensure_ignore_file`, `load_ignore_spec`, `collect_git_files`, `collect_files`, `load_cache`, `typer.progressbar`, `as_posix`, `file_path.relative_to`, `file_path.read_bytes`, `calculate_sha256`, `cache.get`, `cached.get`, `isinstance`, `extract_symbols`, `data.get`, `renderer`, `index_path.read_text`, `index_path.exists`, `index_path.write_text`, `save_cache`, `len`; raises: `typer.Exit`)
 
 ## src/omphalos/ignore.py
-- `ensure_ignore_file()` @54: Create a default .omphignore file if it does not already exist. (calls: `target.exists`, `target.write_text`, `IGNORE_TEMPLATE.strip`)
-- `load_ignore_spec()` @67: Load and merge all ignore rules into a unified PathSpec. (calls: `list`, `ignore_file.exists`, `patterns.extend`, `splitlines`, `ignore_file.read_text`, `pathspec.GitIgnoreSpec.from_lines`)
-- `collect_files()` @90: Recursively collect supported files, pruning directories matched by ignore spec. (calls: `os.walk`, `relative_to`, `Path`, `spec.match_file`, `as_posix`, `p.suffix.lower`, `target_files.append`, `target_files.sort`)
-- class `NotAGitRepoError` @117
-- `collect_git_files()` @121: Collect only files tracked by Git (via git ls-files), filtered by spec and extension. (calls: `subprocess.run`, `strip`, `proc.stderr.decode`, `proc.stdout.split`, `replace`, `chunk.decode`, `Path`, `p.suffix.lower`, `is_file`, `spec.match_file`, `target_files.append`, `target_files.sort`; raises: `NotAGitRepoError`)
+- `ensure_ignore_file()` @60: Create a default .omphignore file if it does not already exist. (calls: `target.exists`, `target.write_text`, `IGNORE_TEMPLATE.strip`)
+- `load_ignore_spec()` @73: Load and merge all ignore rules into a unified PathSpec. (calls: `list`, `ignore_file.exists`, `patterns.extend`, `splitlines`, `ignore_file.read_text`, `pathspec.GitIgnoreSpec.from_lines`)
+- `collect_files()` @96: Recursively collect supported files, pruning directories matched by ignore spec. (calls: `os.walk`, `relative_to`, `Path`, `spec.match_file`, `as_posix`, `p.suffix.lower`, `target_files.append`, `target_files.sort`)
+- class `NotAGitRepoError` @123
+- `collect_git_files()` @127: Collect only files tracked by Git (via git ls-files), filtered by spec and extension. (calls: `subprocess.run`, `strip`, `proc.stderr.decode`, `proc.stdout.split`, `replace`, `chunk.decode`, `Path`, `p.suffix.lower`, `is_file`, `spec.match_file`, `target_files.append`, `target_files.sort`; raises: `NotAGitRepoError`)
 
 ## src/omphalos/parser.py
 - `_text()` @41: Decode Tree-sitter AST node text bytes to a UTF-8 string. (calls: `decode`)
@@ -110,8 +110,9 @@
 - `test_check_fails_when_stale_and_writes_nothing()` @182 (calls: `write_text`, `scan`, `read_text`)
 - `test_check_fails_when_index_missing()` @195 (calls: `write_text`, `scan`)
 - `test_version_flag()` @201 (calls: `runner.invoke`)
-- `test_git_only_scans_only_tracked_files()` @211 (calls: `subprocess.run`, `write_text`, `scan`, `read_text`)
-- `test_git_only_outside_repo_fails()` @225 (calls: `scan`, `result.output.lower`)
+- `test_no_args_shows_help()` @207 (calls: `runner.invoke`)
+- `test_git_only_scans_only_tracked_files()` @219 (calls: `subprocess.run`, `write_text`, `scan`, `read_text`)
+- `test_git_only_outside_repo_fails()` @233 (calls: `scan`, `result.output.lower`)
 
 ## tests/test_edge_cases.py
 - `by_name()` @16 (calls: `by_name`, `s.get`)

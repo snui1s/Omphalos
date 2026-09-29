@@ -20,7 +20,9 @@ from omphalos.render import render_json, render_markdown
 INDEX_FILE = "INDEX.md"
 FORMATS = ("markdown", "json")
 
-app = typer.Typer(help="Omphalos - codebase symbol index for LLMs")
+app = typer.Typer(
+    add_completion=False,
+)
 
 
 def _package_version() -> str:
@@ -38,14 +40,33 @@ def _version_callback(value: bool):
         raise typer.Exit()
 
 
-@app.callback()
+@app.callback(invoke_without_command=True)
 def main(
+    ctx: typer.Context,
     version: bool = typer.Option(
         False, "--version", callback=_version_callback, is_eager=True,
         help="Show version and exit.",
     )
 ):
-    """Omphalos - Codebase symbol indexer for LLMs."""
+    """Omphalos - Codebase symbol indexer for LLMs.
+
+    Quick start:
+
+      omph scan                  Scan repository and generate INDEX.md
+
+      omph scan --check          Verify index is up to date (exit 1 if stale)
+
+      omph scan --git-only       Scan only files tracked by Git
+
+      omph scan --format json    Export index as JSON
+
+      omph init                  Create a default .omphignore file
+
+    For full options of each command, run: omph COMMAND --help
+    """
+    if ctx.invoked_subcommand is None:
+        typer.echo(ctx.get_help())
+        raise typer.Exit()
 
 
 @app.command()

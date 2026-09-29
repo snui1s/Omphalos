@@ -15,3 +15,8 @@ wheels/
 .ruff_cache/
 .omphcache
 .omphalos_cache.json
+
+npm_publish.py
+pypi_publish.py
+
+.env

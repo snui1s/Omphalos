@@ -204,6 +204,14 @@ def test_version_flag():
     assert "omphalos" in result.output
 
 
+def test_no_args_shows_help():
+    result = runner.invoke(app, [])
+    assert result.exit_code == 0
+    assert "Commands" in result.output
+    assert "scan" in result.output
+    assert "init" in result.output
+
+
 GIT_AVAILABLE = shutil.which("git") is not None
 
 
