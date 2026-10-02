@@ -1,16 +1,28 @@
 # Codebase Symbol Index
 
+## bin/omph.js
+- const `{ spawnSync }` @3
+- const `path` @4
+- const `fs` @5
+- const `args` @7
+- const `isWin` @8
+- function `run()` @10 (calls: `spawnSync`)
+- function `hasCommand()` @22 (calls: `spawnSync`)
+- function `findNativeBinary()` @36 (calls: `spawnSync`, `filter`, `map`, `res.stdout.split`, `l.trim`, `line.toLowerCase`, `lower.endsWith`, `lower.includes`)
+- function `findVenvPython()` @67 (calls: `path.join`, `fs.existsSync`, `process.cwd`)
+- function `main()` @79 (calls: `path.resolve`, `path.join`, `fs.existsSync`, `findNativeBinary`, `run`, `process.exit`, `findVenvPython`, `hasCommand`, `console.log`, `console.error`)
+
 ## src/omphalos/cache.py
 - `calculate_sha256()` @15: Calculate the SHA-256 checksum of raw file bytes for change detection. (calls: `hexdigest`, `hashlib.sha256`)
 - `load_cache()` @19: Load symbol cache from .omphcache. (calls: `cache_path.exists`, `json.loads`, `cache_path.read_text`, `isinstance`, `raw.get`)
 - `save_cache()` @38: Save symbol cache to .omphcache atomically. (calls: `tempfile.mkstemp`, `os.fdopen`, `json.dump`, `os.replace`, `os.unlink`)
 
 ## src/omphalos/cli.py
-- `_package_version()` @26: Read the installed package version (single source of truth: pyproject.toml). (calls: `version`)
-- `_version_callback()` @34: Callback for --version flag to print the version and exit immediately. (calls: `typer.echo`, `_package_version`; raises: `typer.Exit`)
-- `main()` @42: Omphalos - Codebase symbol indexer for LLMs. (calls: `typer.echo`, `ctx.get_help`; raises: `typer.Exit`)
-- `init()` @56: Create a default .omphignore file if not present in the target directory. (calls: `resolve`, `Path`, `ensure_ignore_file`, `typer.echo`)
-- `scan()` @69: Scan multi-language codebase files and generate a symbol index with line numbers and docstrings. (calls: `resolve`, `Path`, `typer.echo`, `join`, `ensure_ignore_file`, `load_ignore_spec`, `collect_git_files`, `collect_files`, `load_cache`, `typer.progressbar`, `as_posix`, `file_path.relative_to`, `file_path.read_bytes`, `calculate_sha256`, `cache.get`, `cached.get`, `isinstance`, `extract_symbols`, `data.get`, `renderer`, `index_path.read_text`, `index_path.exists`, `index_path.write_text`, `save_cache`, `len`; raises: `typer.Exit`)
+- `_package_version()` @28: Read the installed package version (single source of truth: pyproject.toml). (calls: `version`)
+- `_version_callback()` @36: Callback for --version flag to print the version and exit immediately. (calls: `typer.echo`, `_package_version`; raises: `typer.Exit`)
+- `main()` @44: Omphalos - Codebase symbol indexer for LLMs. (calls: `typer.echo`, `ctx.get_help`; raises: `typer.Exit`)
+- `init()` @73: Create a default .omphignore file if not present in the target directory. (calls: `resolve`, `Path`, `ensure_ignore_file`, `typer.echo`)
+- `scan()` @86: Scan multi-language codebase files and generate a symbol index with line numbers and docstrings. (calls: `resolve`, `Path`, `typer.echo`, `join`, `ensure_ignore_file`, `load_ignore_spec`, `collect_git_files`, `collect_files`, `load_cache`, `typer.progressbar`, `as_posix`, `file_path.relative_to`, `file_path.read_bytes`, `calculate_sha256`, `cache.get`, `cached.get`, `isinstance`, `extract_symbols`, `data.get`, `renderer`, `index_path.read_text`, `index_path.exists`, `index_path.write_text`, `save_cache`, `len`; raises: `typer.Exit`)
 
 ## src/omphalos/ignore.py
 - `ensure_ignore_file()` @60: Create a default .omphignore file if it does not already exist. (calls: `target.exists`, `target.write_text`, `IGNORE_TEMPLATE.strip`)

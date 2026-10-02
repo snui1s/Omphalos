@@ -1,0 +1,35 @@
+{
+  "name": "omphalos",
+  "version": "1.1.2",
+  "description": "Codebase symbol index for LLMs",
+  "main": "bin/omph.js",
+  "bin": {
+    "omphalos": "bin/omph.js",
+    "omph": "bin/omph.js"
+  },
+  "scripts": {
+    "test": "node bin/omph.js --help"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/snui1s/Omphalos.git"
+  },
+  "keywords": [
+    "llm",
+    "indexer",
+    "tree-sitter",
+    "ast",
+    "codebase",
+    "symbols",
+    "agent"
+  ],
+  "author": "snui1s <snailsqz@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/snui1s/Omphalos/issues"
+  },
+  "homepage": "https://github.com/snui1s/Omphalos#readme",
+  "files": [
+    "bin/"
+  ]
+}

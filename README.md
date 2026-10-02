@@ -61,6 +61,20 @@ $ uv tool install git+https://github.com/snui1s/Omphalos.git
 $ pip install git+https://github.com/snui1s/Omphalos.git
 ```
 
+### Using npm / npx
+
+Run directly via npx:
+
+```sh
+$ npx omphalos scan
+```
+
+Or install globally:
+
+```sh
+$ npm install -g omphalos
+```
+
 ### From Source
 
 ```sh

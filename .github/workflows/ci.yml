@@ -23,6 +23,9 @@ jobs:
       - name: Mypy
         run: uv run mypy src
 
+      - name: Check INDEX.md freshness
+        run: uv run omph scan --check
+
   test:
     strategy:
       fail-fast: false
