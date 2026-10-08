@@ -8,9 +8,11 @@
 - const `isWin` @8
 - function `run()` @10 (calls: `spawnSync`)
 - function `hasCommand()` @22 (calls: `spawnSync`)
-- function `findNativeBinary()` @36 (calls: `spawnSync`, `filter`, `map`, `res.stdout.split`, `l.trim`, `line.toLowerCase`, `lower.endsWith`, `lower.includes`)
-- function `findVenvPython()` @67 (calls: `path.join`, `fs.existsSync`, `process.cwd`)
-- function `main()` @79 (calls: `path.resolve`, `path.join`, `fs.existsSync`, `findNativeBinary`, `run`, `process.exit`, `findVenvPython`, `hasCommand`, `console.log`, `console.error`)
+- function `isWrapperPath()` @36 (calls: `line.toLowerCase`, `lower.endsWith`, `lower.split`, `segments.includes`, `fs.realpathSync`)
+- function `pickNativeBinary()` @51 (calls: `isWrapperPath`)
+- function `findNativeBinary()` @59 (calls: `spawnSync`, `filter`, `map`, `res.stdout.split`, `l.trim`, `pickNativeBinary`)
+- function `findVenvPython()` @76 (calls: `path.join`, `fs.existsSync`, `process.cwd`)
+- function `main()` @88 (calls: `path.resolve`, `path.join`, `fs.existsSync`, `findNativeBinary`, `run`, `process.exit`, `findVenvPython`, `hasCommand`, `console.log`, `console.error`)
 
 ## src/omphalos/cache.py
 - `calculate_sha256()` @15: Calculate the SHA-256 checksum of raw file bytes for change detection. (calls: `hexdigest`, `hashlib.sha256`)
@@ -116,6 +118,18 @@
 - export interface `AvatarProps` @4: Props for the avatar component.
 - export function `Avatar()` @10: Displays a user avatar.
 - export const `AvatarList()` @14 (calls: `users.map`)
+
+## tests/omph.test.js
+- const `{ test }` @1
+- const `assert` @2
+- const `fs` @3
+- const `os` @4
+- const `path` @5
+- const `{ spawnSync }` @6
+- const `WRAPPER` @8
+- const `{ isWrapperPath, pickNativeBinary, findVenvPython }` @9
+- const `isWin` @11
+- function `tmpDir()` @13 (calls: `fs.mkdtempSync`, `path.join`, `os.tmpdir`)
 
 ## tests/test_cache.py
 - `test_sha256_known_value()` @10 (calls: `calculate_sha256`)
