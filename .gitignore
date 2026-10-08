@@ -20,3 +20,8 @@ npm_publish.py
 pypi_publish.py
 
 .env
+
+# Node / npm
+node_modules/
+.npmrc
+*.tgz

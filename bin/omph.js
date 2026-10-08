@@ -32,6 +32,29 @@ function hasCommand(cmd, testArgs = ["--version"], extraEnv = {}) {
   }
 }
 
+// True if `line` is an npm shim / this wrapper itself (running it would recurse forever)
+function isWrapperPath(line, selfPath = __filename) {
+  const lower = line.toLowerCase();
+  if (lower.endsWith(".js") || lower.endsWith(".cmd") || lower.endsWith(".ps1")) return true;
+  // Match whole path segments only, so e.g. C:\Users\npmfan\... is not rejected
+  const segments = lower.split(/[\\/]+/);
+  if (segments.includes("npm") || segments.includes("node_modules")) return true;
+  // POSIX: npm links bin/omph -> node_modules/.../bin/omph.js, so compare real paths
+  try {
+    return fs.realpathSync(line) === fs.realpathSync(selfPath);
+  } catch {
+    return false;
+  }
+}
+
+// First path from `which`/`where` output that is a real native executable, not the npm wrapper
+function pickNativeBinary(lines, selfPath = __filename) {
+  for (const line of lines) {
+    if (!isWrapperPath(line, selfPath)) return line;
+  }
+  return null;
+}
+
 // Find native Python/compiled executable in PATH, excluding npm wrapper scripts to prevent recursion
 function findNativeBinary(binName) {
   try {
@@ -44,24 +67,10 @@ function findNativeBinary(binName) {
     });
     if (res.status !== 0 || !res.stdout) return null;
     const lines = res.stdout.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-    for (const line of lines) {
-      const lower = line.toLowerCase();
-      // Skip npm shims, node wrappers, cmd/ps1 scripts, and node_modules
-      if (
-        lower.endsWith(".js") ||
-        lower.endsWith(".cmd") ||
-        lower.endsWith(".ps1") ||
-        lower.includes("npm") ||
-        lower.includes("node_modules")
-      ) {
-        continue;
-      }
-      return line;
-    }
+    return pickNativeBinary(lines);
   } catch {
     return null;
   }
-  return null;
 }
 
 function findVenvPython() {
@@ -147,4 +156,8 @@ function main() {
   process.exit(1);
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = { isWrapperPath, pickNativeBinary, findVenvPython };

@@ -8,7 +8,7 @@
     "omph": "bin/omph.js"
   },
   "scripts": {
-    "test": "node bin/omph.js --help"
+    "test": "node --test tests/omph.test.js"
   },
   "repository": {
     "type": "git",
