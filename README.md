@@ -38,6 +38,7 @@ Omphalos was created to solve this problem:
 3. **Internal Logic Hints**: Function-like symbols list their deduplicated call targets (`calls`) and raised exception types (`raises`), giving agents a control-flow preview without opening the file.
 4. **Atomic Incremental Cache**: Tracks SHA-256 content hashes to re-parse only changed files, guaranteeing rapid re-indexes.
 5. **CI/CD Integration**: Supports `--check` mode to ensure codebase indexes stay synchronized with changes.
+6. **Live Watch Mode**: Zero-dependency file monitoring (`omph watch`) automatically re-indexes in milliseconds whenever code files are edited or saved.
 
 ## Install
 
@@ -122,7 +123,16 @@ This generates `INDEX.md` in the root directory:
   - `createSession()` @19
 ```
 
-3. **Instruct AI Agents via `AGENTS.md`**:
+3. **Keep Index Synchronized in Real Time** (Optional):
+
+Run Watch Mode in a background terminal to automatically update `INDEX.md` on every file save:
+
+```sh
+$ omph watch
+# or: omph scan -w
+```
+
+4. **Instruct AI Agents via `AGENTS.md`**:
 
 Create or add to `AGENTS.md` (or `CLAUDE.md` / `.cursorrules`) at the root of your repository so AI agents read `INDEX.md` before exploring code:
 
@@ -142,12 +152,14 @@ Before searching, running grep, or opening entire source files across the codeba
 
 ```sh
 $ omph scan [DIRECTORY] [OPTIONS]
+$ omph watch [DIRECTORY] [OPTIONS]
 ```
 
 The binary is installed as `omph`; the full name `omphalos` is also available as an alias.
 
 | Option           | Flag               | Description                                                               |
 | ---------------- | ------------------ | ------------------------------------------------------------------------- |
+| `--watch`, `-w`  | flag               | Watch files for changes and re-index incrementally in real time.          |
 | `--output`, `-o` | `PATH`             | Custom path for index output (default: `INDEX.md`).                       |
 | `--format`       | `markdown \| json` | Output format (default: `markdown`).                                      |
 | `--check`        | flag               | Verify index is up to date without writing. Exits with code `1` if stale. |

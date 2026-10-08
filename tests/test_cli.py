@@ -234,3 +234,124 @@ def test_git_only_outside_repo_fails(tmp_path: Path):
     result = scan(tmp_path, "--git-only")
     assert result.exit_code == 1
     assert "git" in result.output.lower()
+
+
+def test_scan_watch_rejects_check_flag(tmp_path: Path):
+    result = scan(tmp_path, "--check", "--watch")
+    assert result.exit_code == 2
+    assert "--check cannot be used with --watch" in result.output
+
+
+def test_watch_command_runs_initial_scan(tmp_path: Path, monkeypatch):
+    (tmp_path / "foo.py").write_text("def foo(): pass\n", encoding="utf-8")
+
+    # Prevent infinite loop by monkeypatching watch_loop
+    called = []
+    def fake_watch_loop(root, on_change, git_only=False, **kwargs):
+        called.append(root)
+
+    monkeypatch.setattr("omphalos.cli.watch_loop", fake_watch_loop)
+
+    result = runner.invoke(app, ["watch", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+    assert (tmp_path / INDEX_FILE).exists()
+    assert len(called) == 1
+
+
+def test_watch_reindexes_on_change(tmp_path: Path, monkeypatch):
+    foo_py = tmp_path / "foo.py"
+    foo_py.write_text("def foo(): pass\n", encoding="utf-8")
+
+    def fake_watch_loop(root, on_change, git_only=False, **kwargs):
+        # Modify file and trigger callback
+        foo_py.write_text("def foo(): return 1\ndef bar(): pass\n", encoding="utf-8")
+        on_change([foo_py])
+
+    monkeypatch.setattr("omphalos.cli.watch_loop", fake_watch_loop)
+
+    result = scan(tmp_path, "--watch")
+    assert result.exit_code == 0, result.output
+    index_content = (tmp_path / INDEX_FILE).read_text(encoding="utf-8")
+    assert "bar()" in index_content
+
+
+def test_scan_short_w_flag(tmp_path: Path, monkeypatch):
+    called = []
+    monkeypatch.setattr("omphalos.cli.watch_loop", lambda root, on_change, **kw: called.append(root))
+
+    result = scan(tmp_path, "-w")
+    assert result.exit_code == 0, result.output
+    assert len(called) == 1
+
+
+def test_watch_keyboard_interrupt_handled_cleanly(tmp_path: Path, monkeypatch):
+    def fake_watch_loop(root, on_change, **kw):
+        raise KeyboardInterrupt()
+
+    monkeypatch.setattr("omphalos.cli.watch_loop", fake_watch_loop)
+
+    result = runner.invoke(app, ["watch", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+    assert "Stopped watching." in result.output
+
+
+def test_watch_formats_multiple_changed_files(tmp_path: Path, monkeypatch):
+    def fake_watch_loop(root, on_change, **kw):
+        f1 = tmp_path / "a.py"
+        f2 = tmp_path / "b.py"
+        f1.write_text("def a(): pass\n", encoding="utf-8")
+        f2.write_text("def b(): pass\n", encoding="utf-8")
+        on_change([f1, f2])
+
+        # Test >3 files
+        files = []
+        for i in range(4):
+            fi = tmp_path / f"f{i}.py"
+            fi.write_text(f"def f{i}(): pass\n", encoding="utf-8")
+            files.append(fi)
+        on_change(files)
+
+    monkeypatch.setattr("omphalos.cli.watch_loop", fake_watch_loop)
+
+    result = runner.invoke(app, ["watch", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+    assert "Change detected in a.py, b.py" in result.output
+    assert "Change detected in 4 files" in result.output
+
+
+def test_watch_reports_parse_error_on_change(tmp_path: Path, monkeypatch):
+    bad_py = tmp_path / "bad.py"
+    bad_py.write_text("def ok(): pass\n", encoding="utf-8")
+
+    def fake_watch_loop(root, on_change, **kw):
+        monkeypatch.setattr(
+            "omphalos.cli.extract_symbols",
+            lambda path, content: {"error": "syntax boom", "symbols": []},
+        )
+        bad_py.write_text("def ok(): broken\n", encoding="utf-8")
+        on_change([bad_py])
+
+    monkeypatch.setattr("omphalos.cli.watch_loop", fake_watch_loop)
+
+    result = runner.invoke(app, ["watch", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+    assert "syntax boom" in result.output
+    assert "1 failed" in result.output
+
+
+def test_watch_format_json_and_custom_output(tmp_path: Path, monkeypatch):
+    custom_out = tmp_path / "sub" / "custom.json"
+    custom_out.parent.mkdir()
+    (tmp_path / "mod.py").write_text("def m(): pass\n", encoding="utf-8")
+
+    monkeypatch.setattr("omphalos.cli.watch_loop", lambda *args, **kw: None)
+
+    result = runner.invoke(app, ["watch", str(tmp_path), "--format", "json", "-o", str(custom_out)])
+    assert result.exit_code == 0, result.output
+    assert custom_out.exists()
+    data = json.loads(custom_out.read_text(encoding="utf-8"))
+    assert "mod.py" in data["files"]
+
+
+
+

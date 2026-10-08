@@ -18,11 +18,14 @@
 - `save_cache()` @38: Save symbol cache to .omphcache atomically. (calls: `tempfile.mkstemp`, `os.fdopen`, `json.dump`, `os.replace`, `os.unlink`)
 
 ## src/omphalos/cli.py
-- `_package_version()` @28: Read the installed package version (single source of truth: pyproject.toml). (calls: `version`)
-- `_version_callback()` @36: Callback for --version flag to print the version and exit immediately. (calls: `typer.echo`, `_package_version`; raises: `typer.Exit`)
-- `main()` @44: Omphalos - Codebase symbol indexer for LLMs. (calls: `typer.echo`, `ctx.get_help`; raises: `typer.Exit`)
-- `init()` @73: Create a default .omphignore file if not present in the target directory. (calls: `resolve`, `Path`, `ensure_ignore_file`, `typer.echo`)
-- `scan()` @86: Scan multi-language codebase files and generate a symbol index with line numbers and docstrings. (calls: `resolve`, `Path`, `typer.echo`, `join`, `ensure_ignore_file`, `load_ignore_spec`, `collect_git_files`, `collect_files`, `load_cache`, `typer.progressbar`, `as_posix`, `file_path.relative_to`, `file_path.read_bytes`, `calculate_sha256`, `cache.get`, `cached.get`, `isinstance`, `extract_symbols`, `data.get`, `renderer`, `index_path.read_text`, `index_path.exists`, `index_path.write_text`, `save_cache`, `len`; raises: `typer.Exit`)
+- `_package_version()` @43: Read the installed package version (single source of truth: pyproject.toml). (calls: `version`)
+- `_version_callback()` @51: Callback for --version flag to print the version and exit immediately. (calls: `typer.echo`, `typer.style`, `_package_version`; raises: `typer.Exit`)
+- `main()` @63: Omphalos - Codebase symbol indexer for LLMs. (calls: `typer.echo`, `ctx.get_help`; raises: `typer.Exit`)
+- `init()` @96: Create a default .omphignore file if not present in the target directory. (calls: `resolve`, `Path`, `ensure_ignore_file`, `typer.echo`, `typer.style`, `notify_if_update_available`, `_package_version`)
+- `_execute_scan()` @112: Scan files, update index and cache, and return summary statistics. (calls: `load_ignore_spec`, `collect_git_files`, `collect_files`, `load_cache`, `as_posix`, `file_path.relative_to`, `file_path.read_bytes`, `typer.echo`, `typer.style`, `calculate_sha256`, `cache.get`, `cached.get`, `isinstance`, `extract_symbols`, `data.get`, `typer.progressbar`, `_process_file`, `renderer`, `index_path.write_text`, `save_cache`, `len`)
+- `_start_watcher()` @175: Watch codebase files for changes and re-index automatically. (calls: `typer.echo`, `typer.style`, `str`, `time.strftime`, `rel_names.append`, `as_posix`, `p.relative_to`, `len`, `join`, `_execute_scan`, `watch_loop`)
+- `scan()` @242: Scan multi-language codebase files and generate a symbol index with line numbers and docstrings. (calls: `resolve`, `Path`, `typer.echo`, `typer.style`, `join`, `ensure_ignore_file`, `load_ignore_spec`, `collect_git_files`, `collect_files`, `load_cache`, `typer.progressbar`, `as_posix`, `file_path.relative_to`, `file_path.read_bytes`, `calculate_sha256`, `cache.get`, `cached.get`, `isinstance`, `extract_symbols`, `renderer`, `index_path.read_text`, `index_path.exists`, `_execute_scan`, `notify_if_update_available`, `_package_version`, `_start_watcher`; raises: `typer.Exit`)
+- `watch()` @362: Watch codebase files for changes and re-index automatically. (calls: `scan`)
 
 ## src/omphalos/ignore.py
 - `ensure_ignore_file()` @60: Create a default .omphignore file if it does not already exist. (calls: `target.exists`, `target.write_text`, `IGNORE_TEMPLATE.strip`)
@@ -57,6 +60,22 @@
 - `render_markdown()` @7: Render structured symbol data into Markdown format for LLM context or human reading. (calls: `files_data.items`, `data.get`, `lines.append`, `_render_md_symbols`, `join`)
 - `_render_md_symbols()` @27: Recursively render symbols as nested Markdown bullet points. (calls: `sym.get`, `detail.append`, `join`, `lines.append`, `_render_md_symbols`)
 - `render_json()` @51: Render structured symbol data into a JSON string for programmatic consumption. (calls: `data.get`, `files_data.items`, `json.dumps`)
+
+## src/omphalos/updater.py
+- `parse_version()` @16: Parse semver string into comparable tuple of ints. (calls: `lstrip`, `v.strip`, `re.findall`, `tuple`, `int`)
+- `is_newer_version()` @23: Return True if latest is strictly newer than current version. (calls: `pkg_parse`, `parse_version`)
+- `get_update_cache_path()` @32: Return user cache path for update checks. (calls: `Path.home`)
+- `read_cached_version()` @38: Read last check timestamp and cached latest version. (calls: `cache_path.is_file`, `json.loads`, `cache_path.read_text`, `isinstance`, `float`, `raw.get`, `str`)
+- `write_cached_version()` @53: Persist last check timestamp and latest version to cache file atomically. (calls: `cache_path.parent.mkdir`, `json.dumps`, `str`, `tempfile.mkstemp`, `os.fdopen`, `f.write`, `os.replace`, `os.path.exists`, `os.unlink`)
+- `fetch_latest_pypi_version()` @76: Query PyPI JSON API for latest version string. (calls: `urllib.request.Request`, `urllib.request.urlopen`, `json.loads`, `decode`, `resp.read`, `data.get`, `info.get`, `str`)
+- `check_for_update()` @92: Check if a newer version is available. (calls: `get_update_cache_path`, `time.time`, `read_cached_version`, `is_newer_version`, `fetch_latest_pypi_version`, `write_cached_version`)
+- `format_update_notice()` @126: Generate a clean, styled CLI notice box for available updates. (calls: `max`, `len`, `typer.style`, `pad_styled`, `join`)
+- `notify_if_update_available()` @167: Print update notification if a newer version is available and not suppressed. (calls: `os.environ.get`, `check_for_update`, `typer.echo`, `format_update_notice`)
+
+## src/omphalos/watcher.py
+- `snapshot_workspace()` @14: Take a timestamp/size snapshot of all tracked codebase and ignore files. (calls: `load_ignore_spec`, `collect_git_files`, `collect_files`, `p.stat`, `ign_path.exists`, `ign_path.stat`)
+- `detect_changes()` @43: Return paths of added, modified, or deleted files between two snapshots. (calls: `curr.items`, `changed.append`)
+- `watch_loop()` @57: Continuously poll workspace for changes and trigger on_change callback. (calls: `dict`, `snapshot_workspace`, `stop_check`, `time.sleep`, `detect_changes`, `on_change`)
 
 ## tests/fixtures/sample.go
 - type `Account` (struct) @3
@@ -125,6 +144,14 @@
 - `test_no_args_shows_help()` @207 (calls: `runner.invoke`)
 - `test_git_only_scans_only_tracked_files()` @219 (calls: `subprocess.run`, `write_text`, `scan`, `read_text`)
 - `test_git_only_outside_repo_fails()` @233 (calls: `scan`, `result.output.lower`)
+- `test_scan_watch_rejects_check_flag()` @239 (calls: `scan`)
+- `test_watch_command_runs_initial_scan()` @245 (calls: `write_text`, `called.append`, `monkeypatch.setattr`, `runner.invoke`, `str`, `exists`, `len`)
+- `test_watch_reindexes_on_change()` @261 (calls: `foo_py.write_text`, `on_change`, `monkeypatch.setattr`, `scan`, `read_text`)
+- `test_scan_short_w_flag()` @278 (calls: `monkeypatch.setattr`, `called.append`, `scan`, `len`)
+- `test_watch_keyboard_interrupt_handled_cleanly()` @287 (calls: `monkeypatch.setattr`, `runner.invoke`, `str`; raises: `KeyboardInterrupt`)
+- `test_watch_formats_multiple_changed_files()` @298 (calls: `f1.write_text`, `f2.write_text`, `on_change`, `range`, `fi.write_text`, `files.append`, `monkeypatch.setattr`, `runner.invoke`, `str`)
+- `test_watch_reports_parse_error_on_change()` @322 (calls: `bad_py.write_text`, `monkeypatch.setattr`, `on_change`, `runner.invoke`, `str`)
+- `test_watch_format_json_and_custom_output()` @342 (calls: `custom_out.parent.mkdir`, `write_text`, `monkeypatch.setattr`, `runner.invoke`, `str`, `custom_out.exists`, `json.loads`, `custom_out.read_text`)
 
 ## tests/test_edge_cases.py
 - `by_name()` @16 (calls: `by_name`, `s.get`)
@@ -191,3 +218,26 @@
 - `test_extract_fixture_ts()` @233 (calls: `Path`, `extract_symbols`, `by_name`)
 - `test_extract_fixture_go()` @242 (calls: `Path`, `extract_symbols`, `by_name`)
 - `test_extract_fixture_rust()` @249 (calls: `Path`, `extract_symbols`, `by_name`, `any`)
+
+## tests/test_updater.py
+- `test_parse_version()` @21 (calls: `parse_version`)
+- `test_is_newer_version()` @28 (calls: `is_newer_version`)
+- `test_cache_read_write()` @36 (calls: `read_cached_version`, `cache_file.write_text`, `write_cached_version`)
+- `test_check_for_update_cached_within_ttl()` @56 (calls: `time.time`, `write_cached_version`, `monkeypatch.setattr`, `pytest.fail`, `check_for_update`)
+- `test_check_for_update_fetches_when_expired()` @73 (calls: `time.time`, `write_cached_version`, `monkeypatch.setattr`, `check_for_update`, `read_cached_version`)
+- `test_check_for_update_handles_network_failure()` @90 (calls: `monkeypatch.setattr`, `check_for_update`)
+- `test_fetch_latest_pypi_version_success()` @99 (calls: `MagicMock`, `encode`, `json.dumps`, `monkeypatch.setattr`, `fetch_latest_pypi_version`)
+- `test_fetch_latest_pypi_version_network_error()` @109 (calls: `monkeypatch.setattr`, `fetch_latest_pypi_version`; raises: `OSError`)
+- `test_format_update_notice()` @117 (calls: `format_update_notice`)
+- `test_notify_suppressed_in_ci()` @125 (calls: `monkeypatch.setenv`, `monkeypatch.setattr`, `echoed.append`, `notify_if_update_available`, `len`)
+- `test_notify_suppressed_in_json_and_check()` @133 (calls: `monkeypatch.delenv`, `monkeypatch.setattr`, `echoed.append`, `notify_if_update_available`, `len`)
+- `test_notify_prints_when_update_available()` @142 (calls: `monkeypatch.delenv`, `write_cached_version`, `time.time`, `monkeypatch.setattr`, `echoed.append`, `notify_if_update_available`, `len`)
+
+## tests/test_watcher.py
+- `test_snapshot_workspace_and_detect_changes()` @15 (calls: `py_file.write_text`, `write_text`, `snapshot_workspace`, `detect_changes`, `ts_file.write_text`, `ts_file.unlink`)
+- `test_snapshot_workspace_tracks_ignore_files()` @45 (calls: `omphignore.write_text`, `gitignore.write_text`, `snapshot_workspace`, `time.sleep`, `detect_changes`)
+- `test_snapshot_workspace_git_only()` @64 (calls: `subprocess.run`, `tracked_py.write_text`, `untracked_py.write_text`, `snapshot_workspace`)
+- `test_watch_loop_invokes_on_change_with_initial_snapshot()` @80 (calls: `py_file.write_text`, `snapshot_workspace`, `invoked_changes.append`, `list`, `watch_loop`, `len`)
+- `test_watch_loop_with_background_thread_and_stop_check()` @106 (calls: `py_file.write_text`, `invoked_changes.append`, `list`, `time.sleep`, `threading.Thread`, `t.start`, `watch_loop`, `t.join`, `len`)
+- `test_watch_loop_debounce_aggregates_rapid_changes()` @139 (calls: `file1.write_text`, `file2.write_text`, `snapshot_workspace`, `invoked.append`, `list`, `watch_loop`, `len`)
+- `test_watch_loop_exits_on_not_a_git_repo()` @171 (calls: `watch_loop`, `called.append`, `len`)
