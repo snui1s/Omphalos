@@ -165,6 +165,7 @@ The binary is installed as `omph`; the full name `omphalos` is also available as
 | `--check`        | flag               | Verify index is up to date without writing. Exits with code `1` if stale. |
 | `--git-only`     | flag               | Scan only files tracked by Git (`git ls-files`).                          |
 | `--no-cache`     | flag               | Bypass cache and re-parse all files.                                      |
+| `--no-calls`     | flag               | Omit `calls:` annotations (about half the index size on large codebases). |
 | `--version`      | flag               | Show version and exit.                                                    |
 | `--help`         | flag               | Show help message.                                                        |
 
@@ -177,6 +178,18 @@ The binary is installed as `omph`; the full name `omphalos` is also available as
 ```sh
 $ omph scan --format json -o index.json
 ```
+
+### Index size on large codebases
+
+`INDEX.md` is meant to be read in full only on small and medium repositories. Measured on ~900 Python files
+(~430k lines), the full index is ~1.8 MB; `--no-calls` brings it to ~0.86 MB. At that scale, point the agent
+at `grep`/search inside `INDEX.md` instead of loading the whole file, and consider `--no-calls`:
+
+```sh
+$ omph scan --no-calls
+```
+
+`calls:` lists are not name-resolved, so they can include noise; `raises:` annotations are kept either way.
 
 ## Development
 

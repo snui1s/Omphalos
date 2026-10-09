@@ -25,9 +25,9 @@
 - `main()` @63: Omphalos - Codebase symbol indexer for LLMs. (calls: `typer.echo`, `ctx.get_help`; raises: `typer.Exit`)
 - `init()` @96: Create a default .omphignore file if not present in the target directory. (calls: `resolve`, `Path`, `ensure_ignore_file`, `typer.echo`, `typer.style`, `notify_if_update_available`, `_package_version`)
 - `_execute_scan()` @112: Scan files, update index and cache, and return summary statistics. (calls: `load_ignore_spec`, `collect_git_files`, `collect_files`, `load_cache`, `as_posix`, `file_path.relative_to`, `file_path.read_bytes`, `typer.echo`, `typer.style`, `calculate_sha256`, `cache.get`, `cached.get`, `isinstance`, `extract_symbols`, `data.get`, `typer.progressbar`, `_process_file`, `renderer`, `index_path.write_text`, `save_cache`, `len`)
-- `_start_watcher()` @175: Watch codebase files for changes and re-index automatically. (calls: `typer.echo`, `typer.style`, `str`, `time.strftime`, `rel_names.append`, `as_posix`, `p.relative_to`, `len`, `join`, `_execute_scan`, `watch_loop`)
-- `scan()` @242: Scan multi-language codebase files and generate a symbol index with line numbers and docstrings. (calls: `resolve`, `Path`, `typer.echo`, `typer.style`, `join`, `ensure_ignore_file`, `load_ignore_spec`, `collect_git_files`, `collect_files`, `load_cache`, `typer.progressbar`, `as_posix`, `file_path.relative_to`, `file_path.read_bytes`, `calculate_sha256`, `cache.get`, `cached.get`, `isinstance`, `extract_symbols`, `renderer`, `index_path.read_text`, `index_path.exists`, `_execute_scan`, `notify_if_update_available`, `_package_version`, `_start_watcher`; raises: `typer.Exit`)
-- `watch()` @362: Watch codebase files for changes and re-index automatically. (calls: `scan`)
+- `_start_watcher()` @176: Watch codebase files for changes and re-index automatically. (calls: `typer.echo`, `typer.style`, `str`, `time.strftime`, `rel_names.append`, `as_posix`, `p.relative_to`, `len`, `join`, `_execute_scan`, `watch_loop`)
+- `scan()` @245: Scan multi-language codebase files and generate a symbol index with line numbers and docstrings. (calls: `resolve`, `Path`, `typer.echo`, `typer.style`, `join`, `ensure_ignore_file`, `load_ignore_spec`, `collect_git_files`, `collect_files`, `load_cache`, `typer.progressbar`, `as_posix`, `file_path.relative_to`, `file_path.read_bytes`, `calculate_sha256`, `cache.get`, `cached.get`, `isinstance`, `extract_symbols`, `renderer`, `index_path.read_text`, `index_path.exists`, `_execute_scan`, `notify_if_update_available`, `_package_version`, `_start_watcher`; raises: `typer.Exit`)
+- `watch()` @371: Watch codebase files for changes and re-index automatically. (calls: `scan`)
 
 ## src/omphalos/ignore.py
 - `ensure_ignore_file()` @60: Create a default .omphignore file if it does not already exist. (calls: `target.exists`, `target.write_text`, `IGNORE_TEMPLATE.strip`)
@@ -60,8 +60,9 @@
 
 ## src/omphalos/render.py
 - `render_markdown()` @7: Render structured symbol data into Markdown format for LLM context or human reading. (calls: `files_data.items`, `data.get`, `lines.append`, `_render_md_symbols`, `join`)
-- `_render_md_symbols()` @27: Recursively render symbols as nested Markdown bullet points. (calls: `sym.get`, `detail.append`, `join`, `lines.append`, `_render_md_symbols`)
-- `render_json()` @51: Render structured symbol data into a JSON string for programmatic consumption. (calls: `data.get`, `files_data.items`, `json.dumps`)
+- `_render_md_symbols()` @28: Recursively render symbols as nested Markdown bullet points. (calls: `sym.get`, `detail.append`, `join`, `lines.append`, `_render_md_symbols`)
+- `_without_calls()` @52: Return a copy of the symbol tree with every `calls` key removed (input is not mutated). (calls: `sym.items`, `sym.get`, `_without_calls`, `stripped.append`)
+- `render_json()` @63: Render structured symbol data into a JSON string for programmatic consumption. (calls: `data.get`, `_without_calls`, `files_data.items`, `json.dumps`)
 
 ## src/omphalos/updater.py
 - `parse_version()` @16: Parse semver string into comparable tuple of ints. (calls: `lstrip`, `v.strip`, `re.findall`, `tuple`, `int`)
@@ -215,6 +216,9 @@
 - `test_markdown_omits_logic_when_empty()` @163 (calls: `render_markdown`)
 - `test_json_passes_logic_through()` @174 (calls: `write_text`, `runner.invoke`, `str`, `json.loads`, `out.read_text`)
 - `test_cli_scan_end_to_end_includes_logic()` @187 (calls: `write_text`, `runner.invoke`, `str`, `read_text`, `json.loads`)
+- `test_markdown_no_calls_keeps_raises()` @219 (calls: `render_markdown`)
+- `test_json_no_calls_strips_nested_and_does_not_mutate()` @226 (calls: `json.loads`, `render_json`)
+- `test_cli_no_calls_flag_and_check_consistency()` @236 (calls: `write_text`, `runner.invoke`, `str`, `read_text`)
 
 ## tests/test_parser.py
 - `by_name()` @7 (calls: `by_name`, `s.get`)

@@ -116,6 +116,7 @@ def _execute_scan(
     no_cache: bool = False,
     git_only: bool = False,
     show_progress: bool = True,
+    include_calls: bool = True,
 ) -> tuple[Path, int, int, int]:
     """Scan files, update index and cache, and return summary statistics."""
     spec = load_ignore_spec(root)
@@ -164,7 +165,7 @@ def _execute_scan(
             _process_file(file_path)
 
     renderer = render_json if fmt == "json" else render_markdown
-    rendered = renderer(files_data)
+    rendered = renderer(files_data, include_calls=include_calls)
     index_path = output if output else root / INDEX_FILE
 
     index_path.write_text(rendered, encoding="utf-8")
@@ -179,6 +180,7 @@ def _start_watcher(
     fmt: str = "markdown",
     no_cache: bool = False,
     git_only: bool = False,
+    include_calls: bool = True,
 ) -> None:
     """Watch codebase files for changes and re-index automatically."""
     typer.echo(
@@ -217,6 +219,7 @@ def _start_watcher(
                 no_cache=no_cache,
                 git_only=git_only,
                 show_progress=False,
+                include_calls=include_calls,
             )
             if failed:
                 status = typer.style(f" Updated {index_path.name}", fg=typer.colors.YELLOW, bold=True)
@@ -257,6 +260,10 @@ def scan(
     ),
     git_only: bool = typer.Option(
         False, "--git-only", help="Only scan files tracked by git (requires a git repository)"
+    ),
+    calls: bool = typer.Option(
+        True, "--calls/--no-calls",
+        help="Include `calls:` annotations (--no-calls roughly halves index size on large codebases)",
     ),
     watch: bool = typer.Option(
         False, "--watch", "-w", help="Watch codebase files for changes and re-index automatically"
@@ -314,7 +321,7 @@ def scan(
                 files_data[rel_posix] = data
 
         renderer = render_json if fmt == "json" else render_markdown
-        rendered = renderer(files_data)
+        rendered = renderer(files_data, include_calls=calls)
         index_path = output if output else root / INDEX_FILE
         existing = index_path.read_text(encoding="utf-8") if index_path.exists() else None
         if existing == rendered:
@@ -332,6 +339,7 @@ def scan(
             no_cache=no_cache,
             git_only=git_only,
             show_progress=True,
+            include_calls=calls,
         )
     except NotAGitRepoError as e:
         typer.echo(typer.style(f"error: --git-only requires a git repository ({e})", fg=typer.colors.RED), err=True)
@@ -355,6 +363,7 @@ def scan(
             fmt=fmt,
             no_cache=no_cache,
             git_only=git_only,
+            include_calls=calls,
         )
 
 
@@ -374,6 +383,10 @@ def watch(
     git_only: bool = typer.Option(
         False, "--git-only", help="Only scan files tracked by git (requires a git repository)"
     ),
+    calls: bool = typer.Option(
+        True, "--calls/--no-calls",
+        help="Include `calls:` annotations (--no-calls roughly halves index size on large codebases)",
+    ),
 ):
     """Watch codebase files for changes and re-index automatically."""
     scan(
@@ -383,6 +396,7 @@ def watch(
         no_cache=no_cache,
         check=False,
         git_only=git_only,
+        calls=calls,
         watch=True,
     )
 
