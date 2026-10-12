@@ -201,3 +201,46 @@ def test_cli_scan_end_to_end_includes_logic(tmp_path: Path):
     sym = cache["files"]["m.py"]["data"]["symbols"][0]
     assert sym["calls"] == ["auth.check"]
     assert sym["raises"] == ["PermissionError"]
+
+
+# ---------- --no-calls ----------
+
+NESTED = {
+    "a.py": {"symbols": [{
+        "kind": "class", "name": "K", "label": "class `K`", "line": 1, "doc": "", "exported": False,
+        "children": [{
+            "kind": "function", "name": "m", "label": "`m()`", "line": 2, "doc": "", "exported": False,
+            "children": [], "calls": ["helper"], "raises": ["ValueError"],
+        }],
+    }]},
+}
+
+
+def test_markdown_no_calls_keeps_raises():
+    from omphalos.render import render_markdown
+    md = render_markdown(NESTED, include_calls=False)
+    assert "calls:" not in md
+    assert "(raises: `ValueError`)" in md
+
+
+def test_json_no_calls_strips_nested_and_does_not_mutate():
+    import json
+
+    from omphalos.render import render_json
+    out = json.loads(render_json(NESTED, include_calls=False))
+    method = out["files"]["a.py"]["symbols"][0]["children"][0]
+    assert "calls" not in method and method["raises"] == ["ValueError"]
+    assert NESTED["a.py"]["symbols"][0]["children"][0]["calls"] == ["helper"]
+
+
+def test_cli_no_calls_flag_and_check_consistency(tmp_path: Path):
+    (tmp_path / "m.py").write_text("def a():\n    helper()\n\ndef helper():\n    pass\n", encoding="utf-8")
+    from omphalos.cli import app
+    assert runner.invoke(app, ["scan", str(tmp_path)]).exit_code == 0
+    assert "calls:" in (tmp_path / "INDEX.md").read_text(encoding="utf-8")
+
+    assert runner.invoke(app, ["scan", str(tmp_path), "--no-calls"]).exit_code == 0
+    assert "calls:" not in (tmp_path / "INDEX.md").read_text(encoding="utf-8")
+
+    assert runner.invoke(app, ["scan", str(tmp_path), "--no-calls", "--check"]).exit_code == 0
+    assert runner.invoke(app, ["scan", str(tmp_path), "--check"]).exit_code == 1
