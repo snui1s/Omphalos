@@ -37,7 +37,7 @@ dependencies = [
 Homepage = "https://github.com/snui1s/Omphalos"
 Repository = "https://github.com/snui1s/Omphalos"
 Issues = "https://github.com/snui1s/Omphalos/issues"
-Changelog = "https://github.com/snui1s/Omphalos/releases"
+Changelog = "https://github.com/snui1s/Omphalos/blob/main/CHANGELOG.md"
 
 [project.scripts]
 omph = "omphalos.cli:app"
