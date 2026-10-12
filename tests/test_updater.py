@@ -151,3 +151,13 @@ def test_notify_prints_when_update_available(tmp_path: Path, monkeypatch):
     notify_if_update_available("1.1.2", cache_path=cache_file)
     assert len(echoed) == 1
     assert "1.1.2 → 2.0.0" in echoed[0]
+
+
+def test_notify_suppressed_by_opt_out_env_without_network(monkeypatch):
+    monkeypatch.delenv("CI", raising=False)
+    monkeypatch.setenv("OMPH_NO_UPDATE_NOTIFIER", "1")
+    monkeypatch.setattr("omphalos.updater.fetch_latest_pypi_version", lambda *a, **k: pytest.fail("network used"))
+    echoed = []
+    monkeypatch.setattr("typer.echo", lambda msg: echoed.append(msg))
+    notify_if_update_available("1.1.2")
+    assert echoed == []

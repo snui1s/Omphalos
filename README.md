@@ -191,6 +191,19 @@ $ omph scan --no-calls
 
 `calls:` lists are not name-resolved, so they can include noise; `raises:` annotations are kept either way.
 
+### Update notifications and privacy
+
+`omph` checks PyPI for a newer release and prints a short notice when one exists. Details:
+
+- It sends a single `GET https://pypi.org/pypi/omphalos/json` request (the only identifier is the `User-Agent: omphalos-updater` header; no file names, paths or code leave your machine).
+- The result is cached in `~/.omphalos/` for 24 hours, so the network is hit at most once a day. The request has a 1 second timeout and failures are silent.
+- The check is skipped automatically for `--format json`, `--check`, and when `CI` is set.
+- To turn it off entirely, set `OMPH_NO_UPDATE_NOTIFIER=1`:
+
+```sh
+$ export OMPH_NO_UPDATE_NOTIFIER=1   # PowerShell: $env:OMPH_NO_UPDATE_NOTIFIER = "1"
+```
+
 ## Development
 
 ```sh

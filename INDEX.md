@@ -250,6 +250,7 @@
 - `test_notify_suppressed_in_ci()` @125 (calls: `monkeypatch.setenv`, `monkeypatch.setattr`, `echoed.append`, `notify_if_update_available`, `len`)
 - `test_notify_suppressed_in_json_and_check()` @133 (calls: `monkeypatch.delenv`, `monkeypatch.setattr`, `echoed.append`, `notify_if_update_available`, `len`)
 - `test_notify_prints_when_update_available()` @142 (calls: `monkeypatch.delenv`, `write_cached_version`, `time.time`, `monkeypatch.setattr`, `echoed.append`, `notify_if_update_available`, `len`)
+- `test_notify_suppressed_by_opt_out_env_without_network()` @156 (calls: `monkeypatch.delenv`, `monkeypatch.setenv`, `monkeypatch.setattr`, `pytest.fail`, `echoed.append`, `notify_if_update_available`)
 
 ## tests/test_watcher.py
 - `test_snapshot_workspace_and_detect_changes()` @15 (calls: `py_file.write_text`, `write_text`, `snapshot_workspace`, `detect_changes`, `ts_file.write_text`, `ts_file.unlink`)
