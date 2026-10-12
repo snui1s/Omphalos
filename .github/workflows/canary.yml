@@ -1,0 +1,27 @@
+name: Dependency canary
+
+# Weekly run against the newest dependency versions allowed by pyproject.toml (ignoring uv.lock),
+# so breakage from upstream tree-sitter / typer releases shows up before users hit it.
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+jobs:
+  latest-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+
+      - name: Sync with upgraded dependencies
+        run: uv sync --dev --upgrade
+
+      - name: Show resolved versions
+        run: uv pip list | grep -i -E "tree-sitter|typer|pathspec"
+
+      - name: Pytest
+        run: uv run --no-sync pytest -q
