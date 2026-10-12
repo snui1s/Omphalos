@@ -25,3 +25,8 @@ pypi_publish.py
 node_modules/
 .npmrc
 *.tgz
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/
