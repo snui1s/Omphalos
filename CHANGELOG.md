@@ -13,6 +13,13 @@ All notable changes to this project are documented here. The format follows
 - README sections on index size for large codebases and on update notifications / privacy,
   including the existing `OMPH_NO_UPDATE_NOTIFIER=1` opt-out.
 - Test for the `OMPH_NO_UPDATE_NOTIFIER` opt-out.
+- Coverage reporting in CI (`pytest-cov`, fails under 88%; currently ~92%).
+- Weekly "Dependency canary" workflow that runs the tests against the newest dependency versions
+  allowed by `pyproject.toml`, ignoring `uv.lock`.
+
+### Changed
+- Runtime dependencies now have upper bounds (`typer<1`, `pathspec<2`, each `tree-sitter*` package
+  capped below its next minor, since they are pre-1.0 and minor releases can break the API).
 
 ## [1.2.1] - 2026-10-09
 

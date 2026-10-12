@@ -46,7 +46,7 @@ jobs:
         run: uv sync --dev --python ${{ matrix.python-version }}
 
       - name: Pytest
-        run: uv run pytest -q
+        run: uv run pytest -q --cov=omphalos --cov-report=term-missing --cov-fail-under=88
 
   node-wrapper:
     strategy:
